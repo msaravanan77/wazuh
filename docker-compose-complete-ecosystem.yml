@@ -1,0 +1,249 @@
+# Wazuh Complete Ecosystem - Docker Compose
+# This setup includes ALL components: Manager, Indexer, Dashboard, and Agents
+#
+# System Requirements:
+# - RAM: 8GB minimum (16GB recommended)
+# - CPU: 4 cores minimum
+# - Disk: 50GB free space
+# - OS: Linux, macOS, or WSL2 on Windows
+#
+# Usage:
+#   docker-compose -f docker-compose-complete-ecosystem.yml up -d
+#
+# Access:
+#   Dashboard: https://localhost:443
+#   Username: admin
+#   Password: SecretPassword (CHANGE IN PRODUCTION!)
+#   API: https://localhost:55000
+#
+# Note: This is for learning/testing. For production, use separate hosts.
+
+version: '3.8'
+
+services:
+  # ============================================================
+  # WAZUH INDEXER (OpenSearch) - Data Storage & Search
+  # ============================================================
+  wazuh.indexer:
+    image: wazuh/wazuh-indexer:4.7.2
+    container_name: wazuh.indexer
+    hostname: wazuh.indexer
+    restart: always
+    ports:
+      - "9200:9200"
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "bootstrap.memory_lock=true"
+      - "discovery.type=single-node"
+      - "network.host=0.0.0.0"
+      - "plugins.security.ssl.http.enabled=true"
+      - "plugins.security.ssl.http.pemcert_filepath=/usr/share/wazuh-indexer/certs/wazuh.indexer.pem"
+      - "plugins.security.ssl.http.pemkey_filepath=/usr/share/wazuh-indexer/certs/wazuh.indexer-key.pem"
+      - "plugins.security.ssl.http.pemtrustedcas_filepath=/usr/share/wazuh-indexer/certs/root-ca.pem"
+      - "plugins.security.ssl.transport.pemcert_filepath=/usr/share/wazuh-indexer/certs/wazuh.indexer.pem"
+      - "plugins.security.ssl.transport.pemkey_filepath=/usr/share/wazuh-indexer/certs/wazuh.indexer-key.pem"
+      - "plugins.security.ssl.transport.pemtrustedcas_filepath=/usr/share/wazuh-indexer/certs/root-ca.pem"
+      - "plugins.security.allow_default_init_securityindex=true"
+      - "plugins.security.authcz.admin_dn=CN=admin,OU=Wazuh,O=Wazuh,L=California,C=US"
+      - "plugins.security.check_snapshot_restore_write_privileges=true"
+      - "plugins.security.enable_snapshot_restore_privilege=true"
+      - "plugins.security.nodes_dn=CN=wazuh.indexer,OU=Wazuh,O=Wazuh,L=California,C=US"
+      - "plugins.security.restapi.roles_enabled=[\"all_access\",\"security_rest_api_access\"]"
+      - "plugins.security.system_indices.enabled=true"
+      - "plugins.security.system_indices.indices=[\".opendistro-alerting-config\",\".opendistro-alerting-alert*\",\".opendistro-anomaly-results*\",\".opendistro-anomaly-detector*\",\".opendistro-anomaly-checkpoints\",\".opendistro-anomaly-detection-state\",\".opendistro-reports-*\",\".opendistro-notifications-*\",\".opendistro-notebooks\",\".opensearch-observability\",\".opendistro-asynchronous-search-response*\",\".replication-metadata-store\"]"
+      - "cluster.routing.allocation.disk.threshold_enabled=false"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - wazuh-indexer-data:/var/lib/wazuh-indexer
+      - ./config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-indexer/certs/root-ca.pem
+      - ./config/wazuh_indexer_ssl_certs/wazuh.indexer-key.pem:/usr/share/wazuh-indexer/certs/wazuh.indexer-key.pem
+      - ./config/wazuh_indexer_ssl_certs/wazuh.indexer.pem:/usr/share/wazuh-indexer/certs/wazuh.indexer.pem
+      - ./config/wazuh_indexer_ssl_certs/admin.pem:/usr/share/wazuh-indexer/certs/admin.pem
+      - ./config/wazuh_indexer_ssl_certs/admin-key.pem:/usr/share/wazuh-indexer/certs/admin-key.pem
+    networks:
+      - wazuh
+
+  # ============================================================
+  # WAZUH MANAGER - Central Processing & Analysis
+  # ============================================================
+  wazuh.manager:
+    image: wazuh/wazuh-manager:4.7.2
+    container_name: wazuh.manager
+    hostname: wazuh.manager
+    restart: always
+    ports:
+      - "1514:1514"     # Agent communication
+      - "1515:1515"     # Agent enrollment
+      - "514:514/udp"   # Syslog collector
+      - "514:514/tcp"   # Syslog collector TCP
+      - "55000:55000"   # Wazuh API
+    environment:
+      - INDEXER_URL=https://wazuh.indexer:9200
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=SecretPassword
+      - FILEBEAT_SSL_VERIFICATION_MODE=full
+      - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
+      - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
+      - SSL_KEY=/etc/ssl/filebeat.key
+      - API_USERNAME=wazuh-wui
+      - API_PASSWORD=MyS3cr37P450r.*-
+    volumes:
+      # Wazuh configuration and data
+      - wazuh_api_configuration:/var/ossec/api/configuration
+      - wazuh_etc:/var/ossec/etc
+      - wazuh_logs:/var/ossec/logs
+      - wazuh_queue:/var/ossec/queue
+      - wazuh_var_multigroups:/var/ossec/var/multigroups
+      - wazuh_integrations:/var/ossec/integrations
+      - wazuh_active_response:/var/ossec/active-response/bin
+      - wazuh_agentless:/var/ossec/agentless
+      - wazuh_wodles:/var/ossec/wodles
+      - filebeat_etc:/etc/filebeat
+      - filebeat_var:/var/lib/filebeat
+      # SSL certificates
+      - ./config/wazuh_indexer_ssl_certs/root-ca-manager.pem:/etc/ssl/root-ca.pem
+      - ./config/wazuh_indexer_ssl_certs/wazuh.manager.pem:/etc/ssl/filebeat.pem
+      - ./config/wazuh_indexer_ssl_certs/wazuh.manager-key.pem:/etc/ssl/filebeat.key
+      - ./config/wazuh_cluster/wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf
+    depends_on:
+      - wazuh.indexer
+    networks:
+      - wazuh
+
+  # ============================================================
+  # WAZUH DASHBOARD - Web UI & Visualization
+  # ============================================================
+  wazuh.dashboard:
+    image: wazuh/wazuh-dashboard:4.7.2
+    container_name: wazuh.dashboard
+    hostname: wazuh.dashboard
+    restart: always
+    ports:
+      - "443:5601"
+    environment:
+      - OPENSEARCH_HOSTS="https://wazuh.indexer:9200"
+      - WAZUH_API_URL="https://wazuh.manager"
+      - API_USERNAME=wazuh-wui
+      - API_PASSWORD=MyS3cr37P450r.*-
+      - DASHBOARD_USERNAME=kibanaserver
+      - DASHBOARD_PASSWORD=kibanaserver
+    volumes:
+      - ./config/wazuh_indexer_ssl_certs/wazuh.dashboard.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard.pem
+      - ./config/wazuh_indexer_ssl_certs/wazuh.dashboard-key.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard-key.pem
+      - ./config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem
+      - ./config/wazuh_dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
+      - ./config/wazuh_dashboard/wazuh.yml:/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+      - wazuh-dashboard-config:/usr/share/wazuh-dashboard/data/wazuh/config
+      - wazuh-dashboard-custom:/usr/share/wazuh-dashboard/plugins/wazuh/public/assets/custom
+    depends_on:
+      - wazuh.indexer
+      - wazuh.manager
+    networks:
+      - wazuh
+
+  # ============================================================
+  # WAZUH AGENT - Linux Example (SystemA)
+  # ============================================================
+  wazuh.agent.linux:
+    image: wazuh/wazuh-agent:4.7.2
+    container_name: wazuh.agent.linux
+    hostname: systemA-linux
+    restart: always
+    environment:
+      - WAZUH_MANAGER=wazuh.manager
+      - WAZUH_MANAGER_PORT=1514
+      - WAZUH_PROTOCOL=tcp
+      - WAZUH_REGISTRATION_SERVER=wazuh.manager
+      - WAZUH_REGISTRATION_PORT=1515
+      - WAZUH_REGISTRATION_PASSWORD=please123
+      - WAZUH_KEEP_ALIVE_INTERVAL=60
+      - WAZUH_TIME_RECONNECT=120
+      - WAZUH_AGENT_NAME=systemA-linux
+      - WAZUH_AGENT_GROUP=default
+    volumes:
+      # Monitor Docker host logs (example)
+      - /var/log:/host/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - wazuh.manager
+    networks:
+      - wazuh
+
+  # ============================================================
+  # SIMULATED ATTACK GENERATOR (For Testing)
+  # ============================================================
+  attack.simulator:
+    image: ubuntu:22.04
+    container_name: attack.simulator
+    hostname: attack-simulator
+    restart: always
+    command: >
+      bash -c "
+      apt-get update &&
+      apt-get install -y curl wget nmap netcat-openbsd &&
+      while true; do
+        # Simulate SSH brute force
+        echo '[$(date)] Simulated SSH failed login attempt from 192.168.1.100' >> /var/log/auth.log;
+
+        # Simulate web attack
+        echo '[$(date)] 192.168.1.100 - - [$(date)] \"GET /admin.php?cmd=whoami HTTP/1.1\" 403 -' >> /var/log/apache2/access.log;
+
+        # Simulate file modification
+        echo 'Modified by attacker' > /tmp/suspicious_file.txt;
+
+        sleep 60;
+      done
+      "
+    volumes:
+      - attack-logs:/var/log
+    networks:
+      - wazuh
+
+# ============================================================
+# VOLUMES - Persistent Data Storage
+# ============================================================
+volumes:
+  wazuh-indexer-data:
+    driver: local
+  wazuh_api_configuration:
+    driver: local
+  wazuh_etc:
+    driver: local
+  wazuh_logs:
+    driver: local
+  wazuh_queue:
+    driver: local
+  wazuh_var_multigroups:
+    driver: local
+  wazuh_integrations:
+    driver: local
+  wazuh_active_response:
+    driver: local
+  wazuh_agentless:
+    driver: local
+  wazuh_wodles:
+    driver: local
+  filebeat_etc:
+    driver: local
+  filebeat_var:
+    driver: local
+  wazuh-dashboard-config:
+    driver: local
+  wazuh-dashboard-custom:
+    driver: local
+  attack-logs:
+    driver: local
+
+# ============================================================
+# NETWORK - Internal Communication
+# ============================================================
+networks:
+  wazuh:
+    driver: bridge
+    name: wazuh-network
