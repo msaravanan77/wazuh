@@ -11,10 +11,16 @@
 #   docker-compose -f docker-compose-complete-ecosystem.yml up -d
 #
 # Access:
-#   Dashboard: https://localhost:443
+#   From WSL: https://localhost:443 or https://127.0.0.1:443
+#   From Windows Host: https://<WSL_IP>:443 (e.g., https://172.28.10.162:443)
 #   Username: admin
 #   Password: SecretPassword (CHANGE IN PRODUCTION!)
-#   API: https://localhost:55000
+#
+#   API:
+#   From WSL: https://localhost:55000
+#   From Windows Host: https://<WSL_IP>:55000 (e.g., https://172.28.10.162:55000)
+#
+# Find your WSL IP: Run 'ip addr show eth0' in WSL
 #
 # Note: This is for learning/testing. For production, use separate hosts.
 
@@ -30,7 +36,7 @@ services:
     hostname: wazuh.indexer
     restart: always
     ports:
-      - "9200:9200"
+      - "0.0.0.0:9200:9200"  # Bind to all interfaces for WSL2 access
     environment:
       - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
       - "bootstrap.memory_lock=true"
@@ -78,11 +84,11 @@ services:
     hostname: wazuh.manager
     restart: always
     ports:
-      - "1514:1514"     # Agent communication
-      - "1515:1515"     # Agent enrollment
-      - "514:514/udp"   # Syslog collector
-      - "514:514/tcp"   # Syslog collector TCP
-      - "55000:55000"   # Wazuh API
+      - "0.0.0.0:1514:1514"     # Agent communication (bind to all interfaces)
+      - "0.0.0.0:1515:1515"     # Agent enrollment (bind to all interfaces)
+      - "0.0.0.0:514:514/udp"   # Syslog collector (bind to all interfaces)
+      - "0.0.0.0:514:514/tcp"   # Syslog collector TCP (bind to all interfaces)
+      - "0.0.0.0:55000:55000"   # Wazuh API (bind to all interfaces for Windows access)
     environment:
       - INDEXER_URL=https://wazuh.indexer:9200
       - INDEXER_USERNAME=admin
@@ -125,7 +131,7 @@ services:
     hostname: wazuh.dashboard
     restart: always
     ports:
-      - "443:5601"
+      - "0.0.0.0:443:5601"  # Bind to all interfaces for Windows browser access
     environment:
       - OPENSEARCH_HOSTS="https://wazuh.indexer:9200"
       - WAZUH_API_URL="https://wazuh.manager"
