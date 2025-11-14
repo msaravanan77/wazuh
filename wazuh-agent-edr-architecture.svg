@@ -1,0 +1,525 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1600" width="2000" height="1600">
+  <defs>
+    <style>
+      .title { font: bold 32px sans-serif; fill: #1a1a1a; }
+      .subtitle { font: bold 18px sans-serif; fill: #333; }
+      .component-title { font: bold 15px sans-serif; fill: #fff; }
+      .text { font: 12px sans-serif; fill: #333; }
+      .small-text { font: 11px sans-serif; fill: #555; }
+      .tech-text { font: 11px monospace; fill: #666; }
+      .code-text { font: 10px monospace; fill: #444; }
+      .arrow { stroke: #555; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .data-flow { stroke: #2c5aa0; stroke-width: 3; fill: none; marker-end: url(#arrowhead-blue); }
+      .internal-flow { stroke: #888; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead-gray); stroke-dasharray: 3,2; }
+
+      .agent-core { fill: #4a90e2; stroke: #2c5aa0; stroke-width: 2; }
+      .module { fill: #34495e; stroke: #2c3e50; stroke-width: 1.5; }
+      .buffer { fill: #e67e22; stroke: #d35400; stroke-width: 2; }
+      .network { fill: #27ae60; stroke: #1e8449; stroke-width: 2; }
+      .storage { fill: #8e44ad; stroke: #6c3483; stroke-width: 2; }
+      .monitor { fill: #16a085; stroke: #117864; stroke-width: 2; }
+      .security { fill: #c0392b; stroke: #922b21; stroke-width: 2; }
+      .background { fill: #f8f9fa; stroke: #adb5bd; stroke-width: 1; }
+      .highlight { fill: #fff3cd; stroke: #ffc107; stroke-width: 2; }
+    </style>
+
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#555"/>
+    </marker>
+    <marker id="arrowhead-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#2c5aa0"/>
+    </marker>
+    <marker id="arrowhead-gray" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#888"/>
+    </marker>
+
+    <linearGradient id="grad-core" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#5ba3ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4a90e2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad-buffer" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f39c12;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e67e22;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="1000" y="40" class="title" text-anchor="middle">Wazuh Agent - Complete EDR Technical Architecture</text>
+  <text x="1000" y="65" class="subtitle" text-anchor="middle">Endpoint Detection &amp; Response Implementation (C-based Multi-threaded Design)</text>
+
+  <!-- ============ MONITORING MODULES LAYER ============ -->
+  <g id="monitoring-layer">
+    <rect x="50" y="100" width="1900" height="420" class="background" rx="10"/>
+    <text x="1000" y="125" class="subtitle" text-anchor="middle">EVENT COLLECTION MODULES (Multi-threaded Monitoring)</text>
+
+    <!-- File Integrity Monitoring -->
+    <g id="fim-module">
+      <rect x="80" y="145" width="360" height="350" class="monitor" rx="8"/>
+      <text x="260" y="170" class="component-title" text-anchor="middle">File Integrity Monitoring (FIM)</text>
+      <text x="260" y="188" class="tech-text" text-anchor="middle" fill="#fff">src/syscheckd/ | Multi-threaded</text>
+
+      <rect x="95" y="200" width="330" height="55" class="module" rx="4"/>
+      <text x="260" y="218" class="small-text" text-anchor="middle" fill="#fff">FIM_REALTIME (Thread 1)</text>
+      <text x="260" y="232" class="code-text" text-anchor="middle" fill="#ecf0f1">inotify (Linux) | ReadDirectoryChangesW (Win)</text>
+      <text x="260" y="244" class="code-text" text-anchor="middle" fill="#ecf0f1">Instant file change detection</text>
+
+      <rect x="95" y="262" width="330" height="55" class="module" rx="4"/>
+      <text x="260" y="280" class="small-text" text-anchor="middle" fill="#fff">FIM_WHODATA (Thread 2)</text>
+      <text x="260" y="294" class="code-text" text-anchor="middle" fill="#ecf0f1">Audit Subsystem (Linux) | ETW (Windows)</text>
+      <text x="260" y="306" class="code-text" text-anchor="middle" fill="#ecf0f1">Captures WHO changed files + process info</text>
+
+      <rect x="95" y="324" width="330" height="45" class="module" rx="4"/>
+      <text x="260" y="342" class="small-text" text-anchor="middle" fill="#fff">FIM_SCHEDULED (Thread 3)</text>
+      <text x="260" y="356" class="code-text" text-anchor="middle" fill="#ecf0f1">Periodic baseline scan (configurable interval)</text>
+
+      <rect x="95" y="376" width="160" height="40" class="storage" rx="4"/>
+      <text x="175" y="392" class="small-text" text-anchor="middle" fill="#fff">FIM SQLite DB</text>
+      <text x="175" y="404" class="code-text" text-anchor="middle" fill="#ecf0f1">File hashes/attrs</text>
+      <text x="175" y="415" class="code-text" text-anchor="middle" fill="#ecf0f1">Registry keys (Win)</text>
+
+      <rect x="265" y="376" width="160" height="40" class="module" rx="4"/>
+      <text x="345" y="392" class="small-text" text-anchor="middle" fill="#fff">Attributes Tracked</text>
+      <text x="345" y="404" class="code-text" text-anchor="middle" fill="#ecf0f1">MD5/SHA1/SHA256</text>
+      <text x="345" y="415" class="code-text" text-anchor="middle" fill="#ecf0f1">Size/Perms/Owner</text>
+
+      <rect x="95" y="423" width="330" height="60" class="highlight" rx="4"/>
+      <text x="260" y="438" class="small-text" text-anchor="middle" font-weight="bold">Key Files:</text>
+      <text x="260" y="452" class="code-text" text-anchor="middle">src/syscheckd/src/syscheck.c</text>
+      <text x="260" y="464" class="code-text" text-anchor="middle">src/syscheckd/src/run_check.c</text>
+      <text x="260" y="476" class="code-text" text-anchor="middle">src/syscheckd/src/run_realtime.c</text>
+    </g>
+
+    <!-- Log Collector -->
+    <g id="logcollector-module">
+      <rect x="460" y="145" width="360" height="350" class="monitor" rx="8"/>
+      <text x="640" y="170" class="component-title" text-anchor="middle">Log Collector</text>
+      <text x="640" y="188" class="tech-text" text-anchor="middle" fill="#fff">src/logcollector/ | Multi-source</text>
+
+      <rect x="475" y="200" width="330" height="28" class="module" rx="4"/>
+      <text x="640" y="218" class="small-text" text-anchor="middle" fill="#fff">Syslog Parser (RFC 3164/5424)</text>
+
+      <rect x="475" y="234" width="330" height="28" class="module" rx="4"/>
+      <text x="640" y="252" class="small-text" text-anchor="middle" fill="#fff">JSON Parser (structured logs)</text>
+
+      <rect x="475" y="268" width="330" height="28" class="module" rx="4"/>
+      <text x="640" y="286" class="small-text" text-anchor="middle" fill="#fff">Windows Event Log (evtx, EventChannel API)</text>
+
+      <rect x="475" y="302" width="330" height="28" class="module" rx="4"/>
+      <text x="640" y="320" class="small-text" text-anchor="middle" fill="#fff">Journald (systemd-journal)</text>
+
+      <rect x="475" y="336" width="330" height="28" class="module" rx="4"/>
+      <text x="640" y="354" class="small-text" text-anchor="middle" fill="#fff">Application Logs (Apache, MySQL, etc.)</text>
+
+      <rect x="475" y="370" width="330" height="28" class="module" rx="4"/>
+      <text x="640" y="388" class="small-text" text-anchor="middle" fill="#fff">Multi-line Regex Parser</text>
+
+      <rect x="475" y="405" width="160" height="35" class="storage" rx="4"/>
+      <text x="555" y="420" class="small-text" text-anchor="middle" fill="#fff">Position Tracking</text>
+      <text x="555" y="432" class="code-text" text-anchor="middle" fill="#ecf0f1">file_status.json</text>
+
+      <rect x="645" y="405" width="160" height="35" class="module" rx="4"/>
+      <text x="725" y="420" class="small-text" text-anchor="middle" fill="#fff">Filtering</text>
+      <text x="725" y="432" class="code-text" text-anchor="middle" fill="#ecf0f1">Regex ignore rules</text>
+
+      <rect x="475" y="447" width="330" height="36" class="highlight" rx="4"/>
+      <text x="640" y="462" class="small-text" text-anchor="middle" font-weight="bold">Key Files:</text>
+      <text x="640" y="476" class="code-text" text-anchor="middle">src/logcollector/logcollector.c</text>
+    </g>
+
+    <!-- System Collector -->
+    <g id="syscollector-module">
+      <rect x="840" y="145" width="360" height="350" class="monitor" rx="8"/>
+      <text x="1020" y="170" class="component-title" text-anchor="middle">System Collector (Syscollector)</text>
+      <text x="1020" y="188" class="tech-text" text-anchor="middle" fill="#fff">src/wazuh_modules/syscollector/</text>
+
+      <rect x="855" y="200" width="330" height="25" class="module" rx="4"/>
+      <text x="1020" y="217" class="small-text" text-anchor="middle" fill="#fff">Hardware Inventory (CPU, RAM, Board)</text>
+
+      <rect x="855" y="230" width="330" height="25" class="module" rx="4"/>
+      <text x="1020" y="247" class="small-text" text-anchor="middle" fill="#fff">OS Info (Version, Kernel, Architecture)</text>
+
+      <rect x="855" y="260" width="330" height="25" class="module" rx="4"/>
+      <text x="1020" y="277" class="small-text" text-anchor="middle" fill="#fff">Network Adapters + Routing Table</text>
+
+      <rect x="855" y="290" width="330" height="25" class="module" rx="4"/>
+      <text x="1020" y="307" class="small-text" text-anchor="middle" fill="#fff">Network Connections (netstat-like)</text>
+
+      <rect x="855" y="320" width="330" height="25" class="module" rx="4"/>
+      <text x="1020" y="337" class="small-text" text-anchor="middle" fill="#fff">Installed Packages (rpm, dpkg, MSI)</text>
+
+      <rect x="855" y="350" width="330" height="25" class="module" rx="4"/>
+      <text x="1020" y="367" class="small-text" text-anchor="middle" fill="#fff">Running Processes (ps-like + Windows)</text>
+
+      <rect x="855" y="380" width="160" height="35" class="storage" rx="4"/>
+      <text x="935" y="395" class="small-text" text-anchor="middle" fill="#fff">Local DB</text>
+      <text x="935" y="407" class="code-text" text-anchor="middle" fill="#ecf0f1">SQLite inventory</text>
+
+      <rect x="1025" y="380" width="160" height="35" class="module" rx="4"/>
+      <text x="1105" y="395" class="small-text" text-anchor="middle" fill="#fff">DBSync Protocol</text>
+      <text x="1105" y="407" class="code-text" text-anchor="middle" fill="#ecf0f1">Delta sync to manager</text>
+
+      <rect x="855" y="422" width="330" height="60" class="highlight" rx="4"/>
+      <text x="1020" y="437" class="small-text" text-anchor="middle" font-weight="bold">Periodic Scans:</text>
+      <text x="1020" y="451" class="code-text" text-anchor="middle">Hardware: 1h | Packages: 5m | Network: 10s</text>
+      <text x="1020" y="463" class="code-text" text-anchor="middle">Uses data_provider (C++) library</text>
+      <text x="1020" y="475" class="code-text" text-anchor="middle">src/data_provider/</text>
+    </g>
+
+    <!-- SCA + Rootcheck -->
+    <g id="sca-rootcheck">
+      <rect x="1220" y="145" width="360" height="350" class="monitor" rx="8"/>
+      <text x="1400" y="170" class="component-title" text-anchor="middle">SCA &amp; Rootcheck</text>
+      <text x="1400" y="188" class="tech-text" text-anchor="middle" fill="#fff">src/wazuh_modules/sca/ &amp; rootcheck/</text>
+
+      <rect x="1235" y="200" width="330" height="65" class="module" rx="4"/>
+      <text x="1400" y="218" class="small-text" text-anchor="middle" fill="#fff">Security Configuration Assessment (SCA)</text>
+      <text x="1400" y="232" class="code-text" text-anchor="middle" fill="#ecf0f1">Policy-based compliance checking</text>
+      <text x="1400" y="244" class="code-text" text-anchor="middle" fill="#ecf0f1">CIS Benchmarks, PCI-DSS, HIPAA, GDPR</text>
+      <text x="1400" y="256" class="code-text" text-anchor="middle" fill="#ecf0f1">YAML policy files (downloaded from manager)</text>
+
+      <rect x="1235" y="272" width="330" height="55" class="module" rx="4"/>
+      <text x="1400" y="290" class="small-text" text-anchor="middle" fill="#fff">Rootcheck</text>
+      <text x="1400" y="304" class="code-text" text-anchor="middle" fill="#ecf0f1">Rootkit detection (kernel modules, hidden files)</text>
+      <text x="1400" y="316" class="code-text" text-anchor="middle" fill="#ecf0f1">Anomalous process detection</text>
+
+      <rect x="1235" y="334" width="330" height="50" class="module" rx="4"/>
+      <text x="1400" y="352" class="small-text" text-anchor="middle" fill="#fff">Active Response Executor</text>
+      <text x="1400" y="364" class="code-text" text-anchor="middle" fill="#ecf0f1">Executes scripts on detection</text>
+      <text x="1400" y="376" class="code-text" text-anchor="middle" fill="#ecf0f1">(firewall rules, process kill, etc.)</text>
+
+      <rect x="1235" y="391" width="160" height="35" class="storage" rx="4"/>
+      <text x="1315" y="406" class="small-text" text-anchor="middle" fill="#fff">Policy Cache</text>
+      <text x="1315" y="418" class="code-text" text-anchor="middle" fill="#ecf0f1">etc/shared/*.yml</text>
+
+      <rect x="1405" y="391" width="160" height="35" class="module" rx="4"/>
+      <text x="1485" y="406" class="small-text" text-anchor="middle" fill="#fff">Scan Results</text>
+      <text x="1485" y="418" class="code-text" text-anchor="middle" fill="#ecf0f1">Pass/Fail + Evidence</text>
+
+      <rect x="1235" y="433" width="330" height="50" class="highlight" rx="4"/>
+      <text x="1400" y="448" class="small-text" text-anchor="middle" font-weight="bold">Key Files:</text>
+      <text x="1400" y="462" class="code-text" text-anchor="middle">src/wazuh_modules/sca/src/sca.cpp</text>
+      <text x="1400" y="476" class="code-text" text-anchor="middle">src/rootcheck/check_*.c</text>
+    </g>
+
+    <!-- Cloud Modules -->
+    <g id="cloud-modules">
+      <rect x="1600" y="145" width="320" height="350" class="monitor" rx="8"/>
+      <text x="1760" y="170" class="component-title" text-anchor="middle">Cloud Integrations</text>
+      <text x="1760" y="188" class="tech-text" text-anchor="middle" fill="#fff">wodles/ (Python)</text>
+
+      <rect x="1615" y="200" width="290" height="40" class="module" rx="4"/>
+      <text x="1760" y="218" class="small-text" text-anchor="middle" fill="#fff">AWS Module</text>
+      <text x="1760" y="232" class="code-text" text-anchor="middle" fill="#ecf0f1">CloudTrail, GuardDuty, VPC Flow, S3 logs</text>
+
+      <rect x="1615" y="246" width="290" height="40" class="module" rx="4"/>
+      <text x="1760" y="264" class="small-text" text-anchor="middle" fill="#fff">Azure Module</text>
+      <text x="1760" y="278" class="code-text" text-anchor="middle" fill="#ecf0f1">Activity Logs, Event Hub, Defender</text>
+
+      <rect x="1615" y="292" width="290" height="40" class="module" rx="4"/>
+      <text x="1760" y="310" class="small-text" text-anchor="middle" fill="#fff">GCP Module</text>
+      <text x="1760" y="324" class="code-text" text-anchor="middle" fill="#ecf0f1">Cloud Logging, Pub/Sub, Security CC</text>
+
+      <rect x="1615" y="338" width="290" height="40" class="module" rx="4"/>
+      <text x="1760" y="356" class="small-text" text-anchor="middle" fill="#fff">Docker/K8s Module</text>
+      <text x="1760" y="370" class="code-text" text-anchor="middle" fill="#ecf0f1">Container events, orchestration logs</text>
+
+      <rect x="1615" y="384" width="290" height="40" class="module" rx="4"/>
+      <text x="1760" y="402" class="small-text" text-anchor="middle" fill="#fff">Office 365, GitHub</text>
+      <text x="1760" y="416" class="code-text" text-anchor="middle" fill="#ecf0f1">API-based event collection</text>
+
+      <rect x="1615" y="431" width="290" height="52" class="highlight" rx="4"/>
+      <text x="1760" y="446" class="small-text" text-anchor="middle" font-weight="bold">Implementation:</text>
+      <text x="1760" y="460" class="code-text" text-anchor="middle">Python scripts (wodles/aws/, azure/, etc.)</text>
+      <text x="1760" y="474" class="code-text" text-anchor="middle">Scheduled execution, API polling</text>
+    </g>
+  </g>
+
+  <!-- Internal flows from modules -->
+  <path d="M 260 495 L 260 570" class="internal-flow"/>
+  <path d="M 640 495 L 640 570" class="internal-flow"/>
+  <path d="M 1020 495 L 1020 570" class="internal-flow"/>
+  <path d="M 1400 495 L 1400 570" class="internal-flow"/>
+  <path d="M 1760 495 L 1760 570" class="internal-flow"/>
+
+  <text x="1000" y="545" class="tech-text" text-anchor="middle">All modules write to Message Queue (MQ)</text>
+
+  <!-- ============ AGENT CORE LAYER ============ -->
+  <g id="agent-core-layer">
+    <rect x="50" y="570" width="1900" height="470" class="background" rx="10"/>
+    <text x="1000" y="595" class="subtitle" text-anchor="middle">AGENT CORE - Event Processing &amp; Communication Engine</text>
+
+    <!-- Message Queue -->
+    <g id="message-queue">
+      <rect x="80" y="610" width="400" height="110" class="storage" rx="8"/>
+      <text x="280" y="635" class="component-title" text-anchor="middle">Message Queue (MQ)</text>
+      <text x="280" y="653" class="tech-text" text-anchor="middle" fill="#fff">POSIX Message Queue | Unix Domain Sockets</text>
+
+      <rect x="95" y="665" width="370" height="25" class="module" rx="4"/>
+      <text x="280" y="682" class="small-text" text-anchor="middle" fill="#fff">Format: "QUEUE:LOCATION:MESSAGE"</text>
+
+      <rect x="95" y="695" width="180" height="20" class="module" rx="4"/>
+      <text x="185" y="709" class="code-text" text-anchor="middle" fill="#fff">syscheck → MQ</text>
+
+      <rect x="285" y="695" width="180" height="20" class="module" rx="4"/>
+      <text x="375" y="709" class="code-text" text-anchor="middle" fill="#fff">logcollector → MQ</text>
+    </g>
+
+    <!-- Agent Daemon Core -->
+    <g id="agent-daemon">
+      <rect x="510" y="610" width="450" height="410" fill="url(#grad-core)" class="agent-core" rx="8"/>
+      <text x="735" y="635" class="component-title" text-anchor="middle">Agent Daemon (wazuh-agentd)</text>
+      <text x="735" y="653" class="tech-text" text-anchor="middle" fill="#fff">src/client-agent/agentd.c | Main Process</text>
+
+      <!-- Main Loop -->
+      <rect x="525" y="665" width="420" height="50" class="module" rx="4"/>
+      <text x="735" y="682" class="small-text" text-anchor="middle" fill="#fff">Main Event Loop (select-based)</text>
+      <text x="735" y="696" class="code-text" text-anchor="middle" fill="#ecf0f1">Monitors MQ, network sockets, signals (SIGUSR1 reload)</text>
+      <text x="735" y="708" class="code-text" text-anchor="middle" fill="#ecf0f1">Thread pool: dispatch, receiver, state, request</text>
+
+      <!-- Threads -->
+      <rect x="525" y="722" width="205" height="45" class="module" rx="4"/>
+      <text x="627" y="738" class="small-text" text-anchor="middle" fill="#fff">Dispatch Thread</text>
+      <text x="627" y="750" class="code-text" text-anchor="middle" fill="#ecf0f1">w_agentd_dispatch_buffer()</text>
+      <text x="627" y="762" class="code-text" text-anchor="middle" fill="#ecf0f1">Sends buffered events</text>
+
+      <rect x="740" y="722" width="205" height="45" class="module" rx="4"/>
+      <text x="842" y="738" class="small-text" text-anchor="middle" fill="#fff">Receiver Thread</text>
+      <text x="842" y="750" class="code-text" text-anchor="middle" fill="#ecf0f1">receive_msg()</text>
+      <text x="842" y="762" class="code-text" text-anchor="middle" fill="#ecf0f1">Manager commands/AR</text>
+
+      <rect x="525" y="774" width="205" height="45" class="module" rx="4"/>
+      <text x="627" y="790" class="small-text" text-anchor="middle" fill="#fff">State Thread</text>
+      <text x="627" y="802" class="code-text" text-anchor="middle" fill="#ecf0f1">w_agentd_state_main()</text>
+      <text x="627" y="814" class="code-text" text-anchor="middle" fill="#ecf0f1">Agent status tracking</text>
+
+      <rect x="740" y="774" width="205" height="45" class="module" rx="4"/>
+      <text x="842" y="790" class="small-text" text-anchor="middle" fill="#fff">Request Thread</text>
+      <text x="842" y="802" class="code-text" text-anchor="middle" fill="#ecf0f1">req_receiver()</text>
+      <text x="842" y="814" class="code-text" text-anchor="middle" fill="#ecf0f1">Internal API requests</text>
+
+      <!-- Event Forwarding -->
+      <rect x="525" y="826" width="420" height="50" class="module" rx="4"/>
+      <text x="735" y="843" class="small-text" text-anchor="middle" fill="#fff">Event Forwarding Logic (event-forward.c)</text>
+      <text x="735" y="857" class="code-text" text-anchor="middle" fill="#ecf0f1">Routes MQ events → Buffer or Direct Send</text>
+      <text x="735" y="869" class="code-text" text-anchor="middle" fill="#ecf0f1">Thread-safe with mutex protection (agcom_msg_mutex)</text>
+
+      <!-- Configuration -->
+      <rect x="525" y="883" width="200" height="45" class="module" rx="4"/>
+      <text x="625" y="899" class="small-text" text-anchor="middle" fill="#fff">Configuration</text>
+      <text x="625" y="911" class="code-text" text-anchor="middle" fill="#ecf0f1">ossec.conf</text>
+      <text x="625" y="923" class="code-text" text-anchor="middle" fill="#ecf0f1">SIGUSR1 → hot reload</text>
+
+      <rect x="735" y="883" width="210" height="45" class="module" rx="4"/>
+      <text x="840" y="899" class="small-text" text-anchor="middle" fill="#fff">Auto-Enrollment</text>
+      <text x="840" y="911" class="code-text" text-anchor="middle" fill="#ecf0f1">start_agent.c</text>
+      <text x="840" y="923" class="code-text" text-anchor="middle" fill="#ecf0f1">Registers with manager if needed</text>
+
+      <!-- Performance -->
+      <rect x="525" y="935" width="420" height="75" class="highlight" rx="4"/>
+      <text x="735" y="950" class="small-text" text-anchor="middle" font-weight="bold">Performance Optimizations:</text>
+      <text x="735" y="964" class="code-text" text-anchor="middle">• EPS throttling: delay() with nanosleep (1000000000/events_persec)</text>
+      <text x="735" y="976" class="code-text" text-anchor="middle">• CPU priority: SCHED_BATCH (Linux), BELOW_NORMAL (Windows)</text>
+      <text x="735" y="988" class="code-text" text-anchor="middle">• Memory bounded: Circular buffer limits (default 5000 msgs ≈ 500MB)</text>
+      <text x="735" y="1000" class="code-text" text-anchor="middle">• Non-blocking I/O: select() multiplexing, epoll on Linux</text>
+    </g>
+
+    <!-- Buffer System -->
+    <g id="buffer-system">
+      <rect x="990" y="610" width="450" height="410" fill="url(#grad-buffer)" class="buffer" rx="8"/>
+      <text x="1215" y="635" class="component-title" text-anchor="middle">Circular Buffer System (Anti-Flooding)</text>
+      <text x="1215" y="653" class="tech-text" text-anchor="middle" fill="#fff">src/client-agent/buffer.c | Thread-safe</text>
+
+      <!-- Data Structure -->
+      <rect x="1005" y="665" width="430" height="85" class="module" rx="4"/>
+      <text x="1220" y="682" class="small-text" text-anchor="middle" fill="#fff">Data Structure (C struct)</text>
+      <text x="1220" y="696" class="code-text" text-anchor="middle" fill="#ecf0f1">typedef struct { void *data; size_t size; } buffered_message;</text>
+      <text x="1220" y="708" class="code-text" text-anchor="middle" fill="#ecf0f1">static buffered_message *buffer; // Circular array</text>
+      <text x="1220" y="720" class="code-text" text-anchor="middle" fill="#ecf0f1">volatile int i = 0;  // Write pointer</text>
+      <text x="1220" y="732" class="code-text" text-anchor="middle" fill="#ecf0f1">volatile int j = 0;  // Read pointer</text>
+      <text x="1220" y="744" class="code-text" text-anchor="middle" fill="#ecf0f1">pthread_mutex_t buffer_mutex; // Thread safety</text>
+
+      <!-- States -->
+      <rect x="1005" y="757" width="430" height="100" class="module" rx="4"/>
+      <text x="1220" y="774" class="small-text" text-anchor="middle" fill="#fff">Anti-Flood States (4 levels)</text>
+      <text x="1220" y="788" class="code-text" text-anchor="middle" fill="#ecf0f1">NORMAL: buffer &lt; warn_level% (default 90%)</text>
+      <text x="1220" y="800" class="code-text" text-anchor="middle" fill="#ecf0f1">WARNING: buffer &gt; warn_level%, &lt; 100% (alert sent)</text>
+      <text x="1220" y="812" class="code-text" text-anchor="middle" fill="#ecf0f1">FULL: buffer = 100% (alert sent, drops oldest if configured)</text>
+      <text x="1220" y="824" class="code-text" text-anchor="middle" fill="#ecf0f1">FLOOD: after tolerance seconds in FULL (alert sent)</text>
+      <text x="1220" y="836" class="code-text" text-anchor="middle" fill="#ecf0f1">Return to NORMAL: buffer &lt; normal_level% (default 70%)</text>
+      <text x="1220" y="848" class="code-text" text-anchor="middle" fill="#ecf0f1">Hysteresis prevents oscillation</text>
+
+      <!-- Operations -->
+      <rect x="1005" y="864" width="210" height="60" class="module" rx="4"/>
+      <text x="1110" y="880" class="small-text" text-anchor="middle" fill="#fff">Operations</text>
+      <text x="1110" y="894" class="code-text" text-anchor="middle" fill="#ecf0f1">buffer_append()</text>
+      <text x="1110" y="906" class="code-text" text-anchor="middle" fill="#ecf0f1">buffer_free()</text>
+      <text x="1110" y="918" class="code-text" text-anchor="middle" fill="#ecf0f1">buffer_resize()</text>
+
+      <rect x="1225" y="864" width="210" height="60" class="module" rx="4"/>
+      <text x="1330" y="880" class="small-text" text-anchor="middle" fill="#fff">Configuration</text>
+      <text x="1330" y="894" class="code-text" text-anchor="middle" fill="#ecf0f1">buffer_capacity: 5000</text>
+      <text x="1330" y="906" class="code-text" text-anchor="middle" fill="#ecf0f1">warn_level: 90%</text>
+      <text x="1330" y="918" class="code-text" text-anchor="middle" fill="#ecf0f1">tolerance: 5 seconds</text>
+
+      <!-- Resilience -->
+      <rect x="1005" y="931" width="430" height="79" class="highlight" rx="4"/>
+      <text x="1220" y="946" class="small-text" text-anchor="middle" font-weight="bold">Resilience Features:</text>
+      <text x="1220" y="960" class="code-text" text-anchor="middle">• Survives manager disconnection (queues locally for hours/days)</text>
+      <text x="1220" y="972" class="code-text" text-anchor="middle">• Auto-reconnect with exponential backoff (2s, 4s, 8s, ...max 60s)</text>
+      <text x="1220" y="984" class="code-text" text-anchor="middle">• Multi-manager failover: tries servers in order</text>
+      <text x="1220" y="996" class="code-text" text-anchor="middle">• Replays all buffered events on reconnection</text>
+    </g>
+
+    <!-- Arrow from MQ to Agent -->
+    <path d="M 480 665 L 510 665" class="data-flow"/>
+    <text x="485" y="658" class="tech-text">Read MQ</text>
+
+    <!-- Arrow from Agent to Buffer -->
+    <path d="M 960 810 L 990 810" class="data-flow"/>
+    <text x="965" y="803" class="tech-text">Buffer or Send</text>
+  </g>
+
+  <!-- ============ NETWORK LAYER ============ -->
+  <g id="network-layer">
+    <rect x="50" y="1070" width="1900" height="280" class="background" rx="10"/>
+    <text x="1000" y="1095" class="subtitle" text-anchor="middle">NETWORK &amp; ENCRYPTION LAYER</text>
+
+    <!-- Encryption -->
+    <g id="encryption">
+      <rect x="80" y="1110" width="550" height="220" class="security" rx="8"/>
+      <text x="355" y="1135" class="component-title" text-anchor="middle">Message Encryption &amp; Integrity</text>
+      <text x="355" y="1153" class="tech-text" text-anchor="middle" fill="#fff">src/os_crypto/shared/msgs.c | src/client-agent/sendmsg.c</text>
+
+      <rect x="95" y="1165" width="520" height="60" class="module" rx="4"/>
+      <text x="355" y="1182" class="small-text" text-anchor="middle" fill="#fff">Encryption Pipeline (CreateSecMSG)</text>
+      <text x="355" y="1196" class="code-text" text-anchor="middle" fill="#ecf0f1">1. Add random 5-char prefix + global counter (10d) + local counter (4d)</text>
+      <text x="355" y="1208" class="code-text" text-anchor="middle" fill="#ecf0f1">2. Calculate MD5 checksum of payload</text>
+      <text x="355" y="1220" class="code-text" text-anchor="middle" fill="#ecf0f1">3. Compress with zlib (5-15x compression)</text>
+
+      <rect x="95" y="1232" width="250" height="50" class="module" rx="4"/>
+      <text x="220" y="1248" class="small-text" text-anchor="middle" fill="#fff">Encryption Algorithms</text>
+      <text x="220" y="1262" class="code-text" text-anchor="middle" fill="#ecf0f1">AES-128-CTR (preferred)</text>
+      <text x="220" y="1274" class="code-text" text-anchor="middle" fill="#ecf0f1">Blowfish-64 (legacy)</text>
+
+      <rect x="355" y="1232" width="260" height="50" class="module" rx="4"/>
+      <text x="485" y="1248" class="small-text" text-anchor="middle" fill="#fff">Key Management</text>
+      <text x="485" y="1262" class="code-text" text-anchor="middle" fill="#ecf0f1">Pre-shared key: /var/ossec/etc/client.keys</text>
+      <text x="485" y="1274" class="code-text" text-anchor="middle" fill="#ecf0f1">Format: ID NAME IP KEY</text>
+
+      <rect x="95" y="1289" width="520" height="31" class="highlight" rx="4"/>
+      <text x="355" y="1302" class="small-text" text-anchor="middle" font-weight="bold">Replay Protection:</text>
+      <text x="355" y="1314" class="code-text" text-anchor="middle">Global counter (1-65535) + Local counter (1-9997) | Manager validates sequence</text>
+    </g>
+
+    <!-- Network -->
+    <g id="network">
+      <rect x="660" y="1110" width="480" height="220" class="network" rx="8"/>
+      <text x="900" y="1135" class="component-title" text-anchor="middle">Network Communication</text>
+      <text x="900" y="1153" class="tech-text" text-anchor="middle" fill="#fff">TCP/IP | src/os_net/</text>
+
+      <rect x="675" y="1165" width="450" height="55" class="module" rx="4"/>
+      <text x="900" y="1182" class="small-text" text-anchor="middle" fill="#fff">TCP Frame Format</text>
+      <text x="900" y="1196" class="code-text" text-anchor="middle" fill="#ecf0f1">[4-byte length header (little-endian)] [Encrypted payload]</text>
+      <text x="900" y="1208" class="code-text" text-anchor="middle" fill="#ecf0f1">Header: "#AES:" or ":" prefix indicates encryption type</text>
+
+      <rect x="675" y="1227" width="215" height="50" class="module" rx="4"/>
+      <text x="782" y="1243" class="small-text" text-anchor="middle" fill="#fff">Connection Details</text>
+      <text x="782" y="1257" class="code-text" text-anchor="middle" fill="#ecf0f1">Port: 1514 (default)</text>
+      <text x="782" y="1269" class="code-text" text-anchor="middle" fill="#ecf0f1">Protocol: TCP</text>
+
+      <rect x="900" y="1227" width="225" height="50" class="module" rx="4"/>
+      <text x="1012" y="1243" class="small-text" text-anchor="middle" fill="#fff">Retry Logic</text>
+      <text x="1012" y="1257" class="code-text" text-anchor="middle" fill="#ecf0f1">Exponential backoff: 2s → 60s</text>
+      <text x="1012" y="1269" class="code-text" text-anchor="middle" fill="#ecf0f1">Infinite retries (survives outages)</text>
+
+      <rect x="675" y="1284" width="450" height="36" class="highlight" rx="4"/>
+      <text x="900" y="1297" class="small-text" text-anchor="middle" font-weight="bold">Bidirectional:</text>
+      <text x="900" y="1311" class="code-text" text-anchor="middle">Agent → Manager: Events | Manager → Agent: AR commands, config updates</text>
+    </g>
+
+    <!-- Manager -->
+    <g id="remote-manager">
+      <rect x="1170" y="1110" width="380" height="220" class="manager" rx="8"/>
+      <text x="1360" y="1135" class="component-title" text-anchor="middle">Manager (wazuh-remoted)</text>
+      <text x="1360" y="1153" class="tech-text" text-anchor="middle" fill="#fff">src/remoted/manager.c</text>
+
+      <rect x="1185" y="1165" width="350" height="35" class="module" rx="4"/>
+      <text x="1360" y="1180" class="small-text" text-anchor="middle" fill="#fff">Network Listener (port 1514)</text>
+      <text x="1360" y="1194" class="code-text" text-anchor="middle" fill="#ecf0f1">HandleSecure() thread pool</text>
+
+      <rect x="1185" y="1207" width="350" height="35" class="module" rx="4"/>
+      <text x="1360" y="1222" class="small-text" text-anchor="middle" fill="#fff">Decryption/Authentication (secure.c)</text>
+      <text x="1360" y="1236" class="code-text" text-anchor="middle" fill="#ecf0f1">ReadSecMSG() verifies counters + MAC</text>
+
+      <rect x="1185" y="1249" width="170" height="35" class="module" rx="4"/>
+      <text x="1270" y="1264" class="small-text" text-anchor="middle" fill="#fff">Control Messages</text>
+      <text x="1270" y="1278" class="code-text" text-anchor="middle" fill="#ecf0f1">Status, ACK, Metadata</text>
+
+      <rect x="1365" y="1249" width="170" height="35" class="module" rx="4"/>
+      <text x="1450" y="1264" class="small-text" text-anchor="middle" fill="#fff">Data Messages</text>
+      <text x="1450" y="1278" class="code-text" text-anchor="middle" fill="#ecf0f1">Events to Engine</text>
+
+      <rect x="1185" y="1291" width="350" height="29" class="module" rx="4"/>
+      <text x="1360" y="1306" class="small-text" text-anchor="middle" fill="#fff">Forward to Engine via UDS Socket</text>
+      <text x="1360" y="1318" class="code-text" text-anchor="middle" fill="#ecf0f1">/var/ossec/queue/sockets/engine.sock</text>
+    </g>
+
+    <!-- Connection arrows -->
+    <path d="M 630 1220 L 660 1220" class="data-flow"/>
+    <text x="635" y="1213" class="tech-text">TCP</text>
+
+    <path d="M 1140 1220 L 1170 1220" class="data-flow"/>
+    <text x="1145" y="1213" class="tech-text">Receive</text>
+
+    <!-- Bidirectional arrow -->
+    <path d="M 1580 1110 L 1580 1070 L 700 1070 L 700 1110" class="arrow"/>
+    <text x="1050" y="1063" class="tech-text">Active Response Commands (Manager → Agent)</text>
+  </g>
+
+  <!-- ============ PERSISTENCE LAYER ============ -->
+  <g id="persistence-layer">
+    <rect x="50" y="1380" width="900" height="180" class="background" rx="10"/>
+    <text x="500" y="1405" class="subtitle" text-anchor="middle">LOCAL PERSISTENCE &amp; STATE</text>
+
+    <rect x="80" y="1420" width="270" height="120" class="storage" rx="6"/>
+    <text x="215" y="1445" class="component-title" text-anchor="middle">SQLite Databases</text>
+    <rect x="95" y="1460" width="235" height="25" class="module" rx="3"/>
+    <text x="212" y="1477" class="small-text" text-anchor="middle" fill="#fff">FIM DB: /var/ossec/queue/fim/db/</text>
+    <rect x="95" y="1490" width="235" height="25" class="module" rx="3"/>
+    <text x="212" y="1507" class="small-text" text-anchor="middle" fill="#fff">Syscollector DB: /var/ossec/queue/db/</text>
+
+    <rect x="370" y="1420" width="270" height="120" class="storage" rx="6"/>
+    <text x="505" y="1445" class="component-title" text-anchor="middle">State Files</text>
+    <rect x="385" y="1460" width="235" height="25" class="module" rx="3"/>
+    <text x="502" y="1477" class="small-text" text-anchor="middle" fill="#fff">Agent State: /var/ossec/var/run/*.state</text>
+    <rect x="385" y="1490" width="235" height="25" class="module" rx="3"/>
+    <text x="502" y="1507" class="small-text" text-anchor="middle" fill="#fff">Log Position: queue/logcollector/*.json</text>
+
+    <rect x="660" y="1420" width="270" height="120" class="storage" rx="6"/>
+    <text x="795" y="1445" class="component-title" text-anchor="middle">Configuration</text>
+    <rect x="675" y="1460" width="235" height="25" class="module" rx="3"/>
+    <text x="792" y="1477" class="small-text" text-anchor="middle" fill="#fff">Local: /var/ossec/etc/ossec.conf</text>
+    <rect x="675" y="1490" width="235" height="25" class="module" rx="3"/>
+    <text x="792" y="1507" class="small-text" text-anchor="middle" fill="#fff">Remote: /var/ossec/etc/shared/agent.conf</text>
+  </g>
+
+  <!-- Key Implementation Details -->
+  <g id="key-details">
+    <rect x="980" y="1380" width="970" height="180" class="background" rx="10"/>
+    <text x="1465" y="1405" class="subtitle" text-anchor="middle">KEY IMPLEMENTATION DETAILS</text>
+
+    <text x="1000" y="1430" class="text" font-weight="bold">Local Intelligence (Agent is NOT just a forwarder):</text>
+    <text x="1010" y="1447" class="small-text">• Anti-flooding prevents server overload (EPS throttling, circular buffer)</text>
+    <text x="1010" y="1462" class="small-text">• Local filtering reduces noise (regex ignore rules in logcollector)</text>
+    <text x="1010" y="1477" class="small-text">• Autonomous operation during manager outage (continues collecting, buffers locally)</text>
+    <text x="1010" y="1492" class="small-text">• Delta sync minimizes bandwidth (DBSync protocol for syscollector)</text>
+    <text x="1010" y="1507" class="small-text">• Event compression (zlib) reduces network traffic by 5-15x</text>
+
+    <text x="1000" y="1530" class="text" font-weight="bold">Critical Source Files:</text>
+    <text x="1010" y="1547" class="code-text">src/client-agent/agentd.c (main daemon) | buffer.c (anti-flood) | sendmsg.c (encryption)</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="1000" y="1580" class="small-text" text-anchor="middle">Wazuh Agent Architecture | Multi-threaded C-based EDR | Local Intelligence + Resilient Design</text>
+</svg>

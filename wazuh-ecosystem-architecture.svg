@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1400" width="1800" height="1400">
+  <defs>
+    <style>
+      .title { font: bold 32px sans-serif; fill: #1a1a1a; }
+      .subtitle { font: bold 18px sans-serif; fill: #333; }
+      .component-title { font: bold 16px sans-serif; fill: #fff; }
+      .text { font: 13px sans-serif; fill: #333; }
+      .small-text { font: 11px sans-serif; fill: #555; }
+      .tech-text { font: 12px monospace; fill: #666; }
+      .arrow { stroke: #555; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .thick-arrow { stroke: #2c5aa0; stroke-width: 3; fill: none; marker-end: url(#arrowhead-blue); }
+      .bi-arrow { stroke: #555; stroke-width: 2; fill: none; marker-end: url(#arrowhead); marker-start: url(#arrowstart); }
+      .encrypted-arrow { stroke: #2c5aa0; stroke-width: 3; fill: none; marker-end: url(#arrowhead-blue); stroke-dasharray: 8,4; }
+
+      /* Component styles */
+      .agent { fill: #4a90e2; stroke: #2c5aa0; stroke-width: 2; }
+      .manager { fill: #e67e22; stroke: #d35400; stroke-width: 2; }
+      .engine { fill: #27ae60; stroke: #1e8449; stroke-width: 2; }
+      .storage { fill: #8e44ad; stroke: #6c3483; stroke-width: 2; }
+      .api { fill: #e74c3c; stroke: #c0392b; stroke-width: 2; }
+      .viz { fill: #16a085; stroke: #117864; stroke-width: 2; }
+      .module { fill: #34495e; stroke: #2c3e50; stroke-width: 1.5; }
+      .data-flow { fill: #ecf0f1; stroke: #95a5a6; stroke-width: 1; }
+    </style>
+
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#555"/>
+    </marker>
+    <marker id="arrowhead-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#2c5aa0"/>
+    </marker>
+    <marker id="arrowstart" markerWidth="10" markerHeight="10" refX="1" refY="3" orient="auto">
+      <polygon points="10 0, 0 3, 10 6" fill="#555"/>
+    </marker>
+
+    <!-- Gradient for 3D effect -->
+    <linearGradient id="grad-agent" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#5ba3ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4a90e2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad-manager" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f39c12;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e67e22;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad-engine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#2ecc71;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#27ae60;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="900" y="40" class="title" text-anchor="middle">Wazuh XDR/EDR Platform - Complete Architecture</text>
+  <text x="900" y="65" class="subtitle" text-anchor="middle">Distributed Security Monitoring &amp; Threat Detection System</text>
+
+  <!-- ===== AGENT LAYER ===== -->
+  <g id="agent-layer">
+    <rect x="50" y="100" width="450" height="480" class="data-flow" rx="10"/>
+    <text x="275" y="125" class="subtitle" text-anchor="middle">ENDPOINT LAYER (Agents)</text>
+
+    <!-- Agent 1 - Linux -->
+    <g id="agent-linux">
+      <rect x="70" y="145" width="190" height="405" fill="url(#grad-agent)" class="agent" rx="8"/>
+      <text x="165" y="170" class="component-title" text-anchor="middle">Linux Agent</text>
+      <text x="165" y="188" class="small-text" text-anchor="middle" fill="#fff">wazuh-agentd (C)</text>
+
+      <!-- Agent modules -->
+      <rect x="85" y="200" width="160" height="30" class="module" rx="4"/>
+      <text x="165" y="220" class="small-text" text-anchor="middle" fill="#fff">FIM (syscheckd)</text>
+
+      <rect x="85" y="238" width="160" height="30" class="module" rx="4"/>
+      <text x="165" y="258" class="small-text" text-anchor="middle" fill="#fff">Logcollector</text>
+
+      <rect x="85" y="276" width="160" height="30" class="module" rx="4"/>
+      <text x="165" y="296" class="small-text" text-anchor="middle" fill="#fff">Syscollector</text>
+
+      <rect x="85" y="314" width="160" height="30" class="module" rx="4"/>
+      <text x="165" y="334" class="small-text" text-anchor="middle" fill="#fff">Rootcheck</text>
+
+      <rect x="85" y="352" width="160" height="30" class="module" rx="4"/>
+      <text x="165" y="372" class="small-text" text-anchor="middle" fill="#fff">SCA</text>
+
+      <rect x="85" y="390" width="160" height="30" class="module" rx="4"/>
+      <text x="165" y="410" class="small-text" text-anchor="middle" fill="#fff">Cloud Modules</text>
+
+      <rect x="85" y="428" width="160" height="45" class="module" rx="4"/>
+      <text x="165" y="445" class="small-text" text-anchor="middle" fill="#fff">Buffer System</text>
+      <text x="165" y="462" class="tech-text" text-anchor="middle" fill="#ecf0f1">Anti-flood + Encryption</text>
+
+      <rect x="85" y="481" width="160" height="55" class="module" rx="4"/>
+      <text x="165" y="502" class="small-text" text-anchor="middle" fill="#fff">Local DB</text>
+      <text x="165" y="518" class="tech-text" text-anchor="middle" fill="#ecf0f1">SQLite (FIM, Syscollector)</text>
+      <text x="165" y="532" class="tech-text" text-anchor="middle" fill="#ecf0f1">Event Queue (MQ)</text>
+    </g>
+
+    <!-- Agent 2 - Windows -->
+    <g id="agent-windows">
+      <rect x="290" y="145" width="190" height="405" fill="url(#grad-agent)" class="agent" rx="8"/>
+      <text x="385" y="170" class="component-title" text-anchor="middle">Windows Agent</text>
+      <text x="385" y="188" class="small-text" text-anchor="middle" fill="#fff">wazuh-agent.exe (C)</text>
+
+      <rect x="305" y="200" width="160" height="30" class="module" rx="4"/>
+      <text x="385" y="220" class="small-text" text-anchor="middle" fill="#fff">Registry Monitor</text>
+
+      <rect x="305" y="238" width="160" height="30" class="module" rx="4"/>
+      <text x="385" y="258" class="small-text" text-anchor="middle" fill="#fff">Event Log Collector</text>
+
+      <rect x="305" y="276" width="160" height="30" class="module" rx="4"/>
+      <text x="385" y="296" class="small-text" text-anchor="middle" fill="#fff">FIM (Whodata/ETW)</text>
+
+      <rect x="305" y="314" width="160" height="30" class="module" rx="4"/>
+      <text x="385" y="334" class="small-text" text-anchor="middle" fill="#fff">Syscollector</text>
+
+      <rect x="305" y="352" width="160" height="30" class="module" rx="4"/>
+      <text x="385" y="372" class="small-text" text-anchor="middle" fill="#fff">SCA</text>
+
+      <rect x="305" y="390" width="160" height="30" class="module" rx="4"/>
+      <text x="385" y="410" class="small-text" text-anchor="middle" fill="#fff">Sysmon Integration</text>
+
+      <rect x="305" y="428" width="160" height="45" class="module" rx="4"/>
+      <text x="385" y="445" class="small-text" text-anchor="middle" fill="#fff">Buffer System</text>
+      <text x="385" y="462" class="tech-text" text-anchor="middle" fill="#ecf0f1">Anti-flood + Encryption</text>
+
+      <rect x="305" y="481" width="160" height="55" class="module" rx="4"/>
+      <text x="385" y="502" class="small-text" text-anchor="middle" fill="#fff">Local DB</text>
+      <text x="385" y="518" class="tech-text" text-anchor="middle" fill="#ecf0f1">SQLite (FIM, Syscollector)</text>
+      <text x="385" y="532" class="tech-text" text-anchor="middle" fill="#ecf0f1">Named Pipes (IPC)</text>
+    </g>
+  </g>
+
+  <!-- Communication arrows from agents -->
+  <path d="M 275 550 L 275 640 L 680 640" class="encrypted-arrow"/>
+  <text x="340" y="625" class="tech-text">AES/Blowfish Encrypted</text>
+  <text x="340" y="642" class="tech-text">TCP Port 1514</text>
+
+  <!-- ===== MANAGER LAYER ===== -->
+  <g id="manager-layer">
+    <rect x="550" y="100" width="520" height="780" class="data-flow" rx="10"/>
+    <text x="810" y="125" class="subtitle" text-anchor="middle">MANAGER/SERVER LAYER</text>
+
+    <!-- Remoted (Manager) -->
+    <g id="manager-remoted">
+      <rect x="680" y="580" width="260" height="280" fill="url(#grad-manager)" class="manager" rx="8"/>
+      <text x="810" y="605" class="component-title" text-anchor="middle">Manager (wazuh-remoted)</text>
+      <text x="810" y="623" class="small-text" text-anchor="middle" fill="#fff">C - Multi-threaded Receiver</text>
+
+      <rect x="695" y="635" width="230" height="35" class="module" rx="4"/>
+      <text x="810" y="650" class="small-text" text-anchor="middle" fill="#fff">Network Listener</text>
+      <text x="810" y="663" class="tech-text" text-anchor="middle" fill="#ecf0f1">TCP:1514, Syslog:514</text>
+
+      <rect x="695" y="678" width="230" height="30" class="module" rx="4"/>
+      <text x="810" y="698" class="small-text" text-anchor="middle" fill="#fff">Decryption/Auth</text>
+
+      <rect x="695" y="716" width="230" height="30" class="module" rx="4"/>
+      <text x="810" y="736" class="small-text" text-anchor="middle" fill="#fff">Agent Metadata DB</text>
+
+      <rect x="695" y="754" width="230" height="30" class="module" rx="4"/>
+      <text x="810" y="774" class="small-text" text-anchor="middle" fill="#fff">Config Distribution</text>
+
+      <rect x="695" y="792" width="230" height="30" class="module" rx="4"/>
+      <text x="810" y="812" class="small-text" text-anchor="middle" fill="#fff">Message Queue</text>
+
+      <rect x="695" y="830" width="110" height="20" class="module" rx="3"/>
+      <text x="750" y="844" class="tech-text" text-anchor="middle" fill="#fff">Active Response</text>
+
+      <rect x="815" y="830" width="110" height="20" class="module" rx="3"/>
+      <text x="870" y="844" class="tech-text" text-anchor="middle" fill="#fff">State Manager</text>
+    </g>
+
+    <!-- Bidirectional arrow for AR -->
+    <path d="M 740 550 L 740 580" class="bi-arrow"/>
+    <text x="750" y="568" class="tech-text">AR Commands</text>
+
+    <!-- Analysis Engine -->
+    <g id="engine">
+      <rect x="680" y="145" width="260" height="400" fill="url(#grad-engine)" class="engine" rx="8"/>
+      <text x="810" y="170" class="component-title" text-anchor="middle">Analysis Engine</text>
+      <text x="810" y="188" class="small-text" text-anchor="middle" fill="#fff">wazuh-engine (C++)</text>
+
+      <rect x="695" y="200" width="230" height="30" class="module" rx="4"/>
+      <text x="810" y="220" class="small-text" text-anchor="middle" fill="#fff">Event Parser (NDJSON)</text>
+
+      <rect x="695" y="238" width="230" height="30" class="module" rx="4"/>
+      <text x="810" y="258" class="small-text" text-anchor="middle" fill="#fff">Router/Orchestrator</text>
+
+      <rect x="695" y="276" width="110" height="30" class="module" rx="4"/>
+      <text x="750" y="296" class="small-text" text-anchor="middle" fill="#fff">Decoders</text>
+
+      <rect x="815" y="276" width="110" height="30" class="module" rx="4"/>
+      <text x="870" y="296" class="small-text" text-anchor="middle" fill="#fff">Rules Engine</text>
+
+      <rect x="695" y="314" width="230" height="30" class="module" rx="4"/>
+      <text x="810" y="334" class="small-text" text-anchor="middle" fill="#fff">Policy Engine</text>
+
+      <rect x="695" y="352" width="110" height="30" class="module" rx="4"/>
+      <text x="750" y="372" class="small-text" text-anchor="middle" fill="#fff">Catalog Store</text>
+
+      <rect x="815" y="352" width="110" height="30" class="module" rx="4"/>
+      <text x="870" y="372" class="small-text" text-anchor="middle" fill="#fff">KVDB</text>
+
+      <rect x="695" y="390" width="110" height="30" class="module" rx="4"/>
+      <text x="750" y="410" class="small-text" text-anchor="middle" fill="#fff">CTI Store</text>
+
+      <rect x="815" y="390" width="110" height="30" class="module" rx="4"/>
+      <text x="870" y="410" class="small-text" text-anchor="middle" fill="#fff">Geo Manager</text>
+
+      <rect x="695" y="428" width="110" height="30" class="module" rx="4"/>
+      <text x="750" y="448" class="small-text" text-anchor="middle" fill="#fff">Logger</text>
+
+      <rect x="815" y="428" width="110" height="30" class="module" rx="4"/>
+      <text x="870" y="448" class="small-text" text-anchor="middle" fill="#fff">Archiver</text>
+
+      <rect x="695" y="466" width="110" height="30" class="module" rx="4"/>
+      <text x="750" y="486" class="small-text" text-anchor="middle" fill="#fff">Metrics Manager</text>
+
+      <rect x="815" y="466" width="110" height="30" class="module" rx="4"/>
+      <text x="870" y="486" class="small-text" text-anchor="middle" fill="#fff">Scheduler</text>
+
+      <rect x="695" y="504" width="230" height="30" class="module" rx="4"/>
+      <text x="810" y="524" class="small-text" text-anchor="middle" fill="#fff">Wazuh Indexer Connector</text>
+    </g>
+
+    <!-- Engine to Manager communication -->
+    <path d="M 810 545 L 810 580" class="arrow"/>
+    <text x="820" y="565" class="tech-text">UDS Socket</text>
+
+    <!-- WazuhDB -->
+    <g id="wazuhdb">
+      <rect x="580" y="685" width="85" height="130" class="storage" rx="6"/>
+      <text x="622" y="705" class="small-text" text-anchor="middle" fill="#fff">WazuhDB</text>
+      <text x="622" y="722" class="tech-text" text-anchor="middle" fill="#ecf0f1">SQLite</text>
+      <rect x="590" y="735" width="65" height="20" class="module" rx="3"/>
+      <text x="622" y="749" class="tech-text" text-anchor="middle" fill="#fff">Agents</text>
+      <rect x="590" y="760" width="65" height="20" class="module" rx="3"/>
+      <text x="622" y="774" class="tech-text" text-anchor="middle" fill="#fff">Inventory</text>
+      <rect x="590" y="785" width="65" height="20" class="module" rx="3"/>
+      <text x="622" y="799" class="tech-text" text-anchor="middle" fill="#fff">Vulns</text>
+    </g>
+
+    <path d="M 665 750 L 680 750" class="arrow"/>
+
+    <!-- API -->
+    <g id="api">
+      <rect x="580" y="145" width="85" height="220" class="api" rx="6"/>
+      <text x="622" y="165" class="component-title" text-anchor="middle" fill="#fff">REST API</text>
+      <text x="622" y="182" class="tech-text" text-anchor="middle" fill="#ecf0f1">Python/Flask</text>
+
+      <rect x="590" y="195" width="65" height="22" class="module" rx="3"/>
+      <text x="622" y="210" class="tech-text" text-anchor="middle" fill="#fff">Agents</text>
+
+      <rect x="590" y="222" width="65" height="22" class="module" rx="3"/>
+      <text x="622" y="237" class="tech-text" text-anchor="middle" fill="#fff">Rules</text>
+
+      <rect x="590" y="249" width="65" height="22" class="module" rx="3"/>
+      <text x="622" y="264" class="tech-text" text-anchor="middle" fill="#fff">Decoders</text>
+
+      <rect x="590" y="276" width="65" height="22" class="module" rx="3"/>
+      <text x="622" y="291" class="tech-text" text-anchor="middle" fill="#fff">RBAC</text>
+
+      <rect x="590" y="303" width="65" height="22" class="module" rx="3"/>
+      <text x="622" y="318" class="tech-text" text-anchor="middle" fill="#fff">Cluster</text>
+
+      <rect x="590" y="330" width="65" height="22" class="module" rx="3"/>
+      <text x="622" y="345" class="tech-text" text-anchor="middle" fill="#fff">Security</text>
+    </g>
+
+    <path d="M 665 280 L 680 280" class="arrow"/>
+    <path d="M 665 340 L 680 750 L 680 750" class="arrow"/>
+  </g>
+
+  <!-- ===== STORAGE & VISUALIZATION LAYER ===== -->
+  <g id="storage-viz-layer">
+    <rect x="1100" y="100" width="650" height="780" class="data-flow" rx="10"/>
+    <text x="1425" y="125" class="subtitle" text-anchor="middle">STORAGE &amp; VISUALIZATION LAYER</text>
+
+    <!-- Wazuh Indexer -->
+    <g id="indexer">
+      <rect x="1130" y="200" width="280" height="280" fill="url(#grad-engine)" class="storage" rx="8"/>
+      <text x="1270" y="225" class="component-title" text-anchor="middle">Wazuh Indexer</text>
+      <text x="1270" y="243" class="small-text" text-anchor="middle" fill="#fff">OpenSearch/Elasticsearch Fork</text>
+
+      <rect x="1145" y="260" width="250" height="35" class="module" rx="4"/>
+      <text x="1270" y="280" class="small-text" text-anchor="middle" fill="#fff">Alert Index</text>
+      <text x="1270" y="293" class="tech-text" text-anchor="middle" fill="#ecf0f1">wazuh-alerts-*</text>
+
+      <rect x="1145" y="303" width="250" height="35" class="module" rx="4"/>
+      <text x="1270" y="323" class="small-text" text-anchor="middle" fill="#fff">Archive Index</text>
+      <text x="1270" y="336" class="tech-text" text-anchor="middle" fill="#ecf0f1">wazuh-archives-*</text>
+
+      <rect x="1145" y="346" width="250" height="35" class="module" rx="4"/>
+      <text x="1270" y="366" class="small-text" text-anchor="middle" fill="#fff">Agent State Index</text>
+      <text x="1270" y="379" class="tech-text" text-anchor="middle" fill="#ecf0f1">wazuh-states-*</text>
+
+      <rect x="1145" y="389" width="250" height="35" class="module" rx="4"/>
+      <text x="1270" y="409" class="small-text" text-anchor="middle" fill="#fff">Monitoring Index</text>
+      <text x="1270" y="422" class="tech-text" text-anchor="middle" fill="#ecf0f1">wazuh-monitoring-*</text>
+
+      <rect x="1145" y="432" width="250" height="35" class="module" rx="4"/>
+      <text x="1270" y="452" class="small-text" text-anchor="middle" fill="#fff">Full-Text Search</text>
+      <text x="1270" y="465" class="tech-text" text-anchor="middle" fill="#ecf0f1">Inverted Index, Sharding</text>
+    </g>
+
+    <!-- Dashboard -->
+    <g id="dashboard">
+      <rect x="1440" y="200" width="280" height="280" fill="url(#grad-engine)" class="viz" rx="8"/>
+      <text x="1580" y="225" class="component-title" text-anchor="middle">Wazuh Dashboard</text>
+      <text x="1580" y="243" class="small-text" text-anchor="middle" fill="#fff">OpenSearch Dashboards</text>
+
+      <rect x="1455" y="260" width="250" height="30" class="module" rx="4"/>
+      <text x="1580" y="280" class="small-text" text-anchor="middle" fill="#fff">Security Events</text>
+
+      <rect x="1455" y="298" width="250" height="30" class="module" rx="4"/>
+      <text x="1580" y="318" class="small-text" text-anchor="middle" fill="#fff">Threat Hunting</text>
+
+      <rect x="1455" y="336" width="250" height="30" class="module" rx="4"/>
+      <text x="1580" y="356" class="small-text" text-anchor="middle" fill="#fff">FIM/Compliance</text>
+
+      <rect x="1455" y="374" width="250" height="30" class="module" rx="4"/>
+      <text x="1580" y="394" class="small-text" text-anchor="middle" fill="#fff">Vulnerability Detection</text>
+
+      <rect x="1455" y="412" width="250" height="30" class="module" rx="4"/>
+      <text x="1580" y="432" class="small-text" text-anchor="middle" fill="#fff">Agent Management</text>
+
+      <rect x="1455" y="450" width="250" height="20" class="module" rx="3"/>
+      <text x="1580" y="464" class="tech-text" text-anchor="middle" fill="#fff">Custom Dashboards</text>
+    </g>
+
+    <!-- File Archives -->
+    <g id="file-archives">
+      <rect x="1130" y="510" width="280" height="120" class="storage" rx="6"/>
+      <text x="1270" y="535" class="component-title" text-anchor="middle">File Archives</text>
+      <text x="1270" y="553" class="small-text" text-anchor="middle" fill="#fff">Local Storage</text>
+
+      <rect x="1145" y="565" width="250" height="25" class="module" rx="3"/>
+      <text x="1270" y="581" class="small-text" text-anchor="middle" fill="#fff">alerts.json.gz</text>
+
+      <rect x="1145" y="595" width="250" height="25" class="module" rx="3"/>
+      <text x="1270" y="611" class="small-text" text-anchor="middle" fill="#fff">archives.json.gz</text>
+    </g>
+
+    <!-- External Integrations -->
+    <g id="integrations">
+      <rect x="1440" y="510" width="280" height="180" class="api" rx="6"/>
+      <text x="1580" y="535" class="component-title" text-anchor="middle">External Integrations</text>
+
+      <rect x="1455" y="550" width="250" height="25" class="module" rx="3"/>
+      <text x="1580" y="566" class="small-text" text-anchor="middle" fill="#fff">SIEM (Splunk, QRadar)</text>
+
+      <rect x="1455" y="580" width="250" height="25" class="module" rx="3"/>
+      <text x="1580" y="596" class="small-text" text-anchor="middle" fill="#fff">SOAR (TheHive, Shuffle)</text>
+
+      <rect x="1455" y="610" width="250" height="25" class="module" rx="3"/>
+      <text x="1580" y="626" class="small-text" text-anchor="middle" fill="#fff">Ticketing (Jira, ServiceNow)</text>
+
+      <rect x="1455" y="640" width="250" height="25" class="module" rx="3"/>
+      <text x="1580" y="656" class="small-text" text-anchor="middle" fill="#fff">Messaging (Slack, PagerDuty)</text>
+    </g>
+
+    <!-- Cloud Modules -->
+    <g id="cloud-modules">
+      <rect x="1130" y="660" width="590" height="200" class="data-flow" rx="6"/>
+      <text x="1425" y="685" class="subtitle" text-anchor="middle">Cloud Integration Modules</text>
+
+      <rect x="1150" y="700" width="130" height="135" class="module" rx="4"/>
+      <text x="1215" y="720" class="small-text" text-anchor="middle" fill="#fff">AWS</text>
+      <text x="1215" y="740" class="tech-text" text-anchor="middle" fill="#ecf0f1">CloudTrail</text>
+      <text x="1215" y="755" class="tech-text" text-anchor="middle" fill="#ecf0f1">GuardDuty</text>
+      <text x="1215" y="770" class="tech-text" text-anchor="middle" fill="#ecf0f1">VPC Flow</text>
+      <text x="1215" y="785" class="tech-text" text-anchor="middle" fill="#ecf0f1">S3 Logs</text>
+      <text x="1215" y="800" class="tech-text" text-anchor="middle" fill="#ecf0f1">Inspector</text>
+      <text x="1215" y="815" class="tech-text" text-anchor="middle" fill="#ecf0f1">Macie</text>
+
+      <rect x="1300" y="700" width="130" height="135" class="module" rx="4"/>
+      <text x="1365" y="720" class="small-text" text-anchor="middle" fill="#fff">Azure</text>
+      <text x="1365" y="740" class="tech-text" text-anchor="middle" fill="#ecf0f1">Activity Logs</text>
+      <text x="1365" y="755" class="tech-text" text-anchor="middle" fill="#ecf0f1">Event Hub</text>
+      <text x="1365" y="770" class="tech-text" text-anchor="middle" fill="#ecf0f1">Defender</text>
+      <text x="1365" y="785" class="tech-text" text-anchor="middle" fill="#ecf0f1">Storage Logs</text>
+      <text x="1365" y="800" class="tech-text" text-anchor="middle" fill="#ecf0f1">AD Logs</text>
+
+      <rect x="1450" y="700" width="130" height="135" class="module" rx="4"/>
+      <text x="1515" y="720" class="small-text" text-anchor="middle" fill="#fff">Google Cloud</text>
+      <text x="1515" y="740" class="tech-text" text-anchor="middle" fill="#ecf0f1">Cloud Logging</text>
+      <text x="1515" y="755" class="tech-text" text-anchor="middle" fill="#ecf0f1">Pub/Sub</text>
+      <text x="1515" y="770" class="tech-text" text-anchor="middle" fill="#ecf0f1">Security CC</text>
+      <text x="1515" y="785" class="tech-text" text-anchor="middle" fill="#ecf0f1">GCS Logs</text>
+
+      <rect x="1600" y="700" width="100" height="135" class="module" rx="4"/>
+      <text x="1650" y="720" class="small-text" text-anchor="middle" fill="#fff">Others</text>
+      <text x="1650" y="740" class="tech-text" text-anchor="middle" fill="#ecf0f1">Docker</text>
+      <text x="1650" y="755" class="tech-text" text-anchor="middle" fill="#ecf0f1">Kubernetes</text>
+      <text x="1650" y="770" class="tech-text" text-anchor="middle" fill="#ecf0f1">Office 365</text>
+      <text x="1650" y="785" class="tech-text" text-anchor="middle" fill="#ecf0f1">GitHub</text>
+    </g>
+  </g>
+
+  <!-- Connection arrows -->
+  <path d="M 940 340 L 1130 340" class="thick-arrow"/>
+  <text x="1000" y="330" class="tech-text">HTTPS/REST</text>
+  <text x="1000" y="347" class="tech-text">Bulk Index</text>
+
+  <path d="M 1410 340 L 1440 340" class="arrow"/>
+  <text x="1415" y="330" class="tech-text">Query</text>
+
+  <path d="M 940 580 L 1130 580" class="arrow"/>
+  <text x="1000" y="570" class="tech-text">Compress + Write</text>
+
+  <path d="M 940 620 L 1440 620" class="arrow"/>
+  <text x="1120" y="610" class="tech-text">Webhook/API</text>
+
+  <!-- Cloud modules to manager -->
+  <path d="M 1425 660 L 1425 620 L 1070 620 L 1070 450 L 940 450" class="arrow"/>
+  <text x="1050" y="530" class="tech-text">Cloud Events</text>
+
+  <!-- Legend -->
+  <g id="legend">
+    <rect x="50" y="630" width="450" height="240" fill="#f9f9f9" stroke="#aaa" stroke-width="1" rx="6"/>
+    <text x="275" y="655" class="subtitle" text-anchor="middle">Architecture Legend</text>
+
+    <rect x="70" y="670" width="40" height="25" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="3"/>
+    <text x="120" y="687" class="text">Agent Components (C)</text>
+
+    <rect x="70" y="705" width="40" height="25" fill="#e67e22" stroke="#d35400" stroke-width="2" rx="3"/>
+    <text x="120" y="722" class="text">Manager Components (C)</text>
+
+    <rect x="70" y="740" width="40" height="25" fill="#27ae60" stroke="#1e8449" stroke-width="2" rx="3"/>
+    <text x="120" y="757" class="text">Engine Components (C++)</text>
+
+    <rect x="70" y="775" width="40" height="25" fill="#8e44ad" stroke="#6c3483" stroke-width="2" rx="3"/>
+    <text x="120" y="792" class="text">Storage Components</text>
+
+    <rect x="70" y="810" width="40" height="25" fill="#e74c3c" stroke="#c0392b" stroke-width="2" rx="3"/>
+    <text x="120" y="827" class="text">API/Integration (Python)</text>
+
+    <line x1="280" y1="677" x2="350" y2="677" class="encrypted-arrow"/>
+    <text x="360" y="682" class="text">Encrypted Communication</text>
+
+    <line x1="280" y1="697" x2="350" y2="697" class="thick-arrow"/>
+    <text x="360" y="702" class="text">Primary Data Flow</text>
+
+    <line x1="280" y1="717" x2="350" y2="717" class="arrow"/>
+    <text x="360" y="722" class="text">Control/Query Flow</text>
+
+    <line x1="280" y1="737" x2="350" y2="737" class="bi-arrow"/>
+    <text x="360" y="742" class="text">Bidirectional</text>
+
+    <!-- Key Technologies -->
+    <text x="70" y="840" class="text" font-weight="bold">Key Technologies:</text>
+    <text x="70" y="855" class="small-text">• C/C++: Core performance-critical components</text>
+    <text x="70" y="868" class="small-text">• Python: REST API, cloud integrations, automation</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="900" y="1360" class="small-text" text-anchor="middle">Wazuh Architecture | Distributed XDR Platform | Open Source SIEM</text>
+  <text x="900" y="1380" class="tech-text" text-anchor="middle">Components: Agent → Manager → Analysis Engine → Indexer → Dashboard</text>
+</svg>
