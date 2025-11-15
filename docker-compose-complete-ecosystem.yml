@@ -34,18 +34,25 @@ services:
   # CERTIFICATE GENERATOR (Runs once at startup)
   # ============================================================
   wazuh-certs-generator:
-    image: wazuh/wazuh-certs-tool:0.0.1
+    image: alpine:3.18
     container_name: wazuh-certs-generator
     hostname: wazuh-certs-generator
     volumes:
       - wazuh-certificates:/certificates
     command: >
-      bash -c "
+      sh -c "
       # Check if certificates already exist
       if [ -f /certificates/admin.pem ]; then
         echo 'Certificates already exist, skipping generation'
         exit 0
       fi
+
+      echo 'Installing required tools...'
+      apk add --no-cache curl openssl bash
+
+      echo 'Downloading Wazuh certificate generation tool...'
+      curl -so /tmp/wazuh-certs-tool.sh https://packages.wazuh.com/4.7/wazuh-certs-tool.sh
+      chmod +x /tmp/wazuh-certs-tool.sh
 
       # Create config for certificate generation
       cat > /tmp/config.yml <<EOF
@@ -61,16 +68,18 @@ services:
             ip: wazuh.dashboard
       EOF
 
-      # Generate certificates
-      /usr/local/bin/wazuh-certs-tool.sh -A /tmp/config.yml -ca -v
+      echo 'Generating certificates...'
+      bash /tmp/wazuh-certs-tool.sh -A /tmp/config.yml -ca -v
 
-      # Copy certificates to the shared volume
+      echo 'Copying certificates to shared volume...'
       cp -v /tmp/wazuh-certificates/*.pem /certificates/
 
       # Set proper permissions
       chmod 644 /certificates/*.pem
 
-      echo 'Certificate generation complete'
+      echo '========================================='
+      echo 'Certificate generation complete!'
+      echo '========================================='
       ls -lah /certificates/
       "
     networks:
