@@ -12,9 +12,10 @@
 # - OS: Linux, macOS, or WSL2 on Windows
 #
 # Quick Start:
-#   1. docker-compose -f docker-compose-complete-ecosystem.yml up -d
-#   2. Wait 2-3 minutes for initialization
-#   3. Access dashboard at https://localhost:443 (or https://<WSL_IP>:443)
+#   1. docker-compose -f docker-compose-complete-ecosystem.yml down -v
+#   2. docker-compose -f docker-compose-complete-ecosystem.yml up -d
+#   3. Wait 2-3 minutes for initialization
+#   4. Access dashboard at https://localhost:443 (or https://<WSL_IP>:443)
 #
 # Credentials:
 #   Username: admin
@@ -41,8 +42,8 @@ services:
       - wazuh-certificates:/certificates
     command: >
       sh -c "
-      # Check if certificates already exist
-      if [ -f /certificates/admin.pem ]; then
+      # Check if properly named certificates already exist
+      if [ -f /certificates/wazuh.indexer.pem ]; then
         echo 'Certificates already exist, skipping generation'
         exit 0
       fi
@@ -55,7 +56,7 @@ services:
       chmod +x /tmp/wazuh-certs-tool.sh
 
       # Create config for certificate generation
-      cat > /tmp/config.yml <<EOF
+      cat > /tmp/config.yml <<'CONFIGEOF'
       nodes:
         indexer:
           - name: wazuh.indexer
@@ -66,7 +67,7 @@ services:
         dashboard:
           - name: wazuh.dashboard
             ip: wazuh.dashboard
-      EOF
+      CONFIGEOF
 
       echo 'Generating certificates...'
       bash /tmp/wazuh-certs-tool.sh -A /tmp/config.yml -ca -v
@@ -152,8 +153,8 @@ services:
       - INDEXER_PASSWORD=SecretPassword
       - FILEBEAT_SSL_VERIFICATION_MODE=none
       - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
-      - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
-      - SSL_KEY=/etc/ssl/filebeat-key.pem
+      - SSL_CERTIFICATE=/etc/ssl/wazuh.manager.pem
+      - SSL_KEY=/etc/ssl/wazuh.manager-key.pem
       - API_USERNAME=wazuh-wui
       - API_PASSWORD=MyS3cr37P450r.*-
     volumes:
@@ -234,7 +235,7 @@ services:
       # Update and install dependencies
       echo 'Installing dependencies...'
       apt-get update -qq &&
-      apt-get install -y -qq curl gnupg apt-transport-https lsb-release ca-certificates systemctl
+      apt-get install -y -qq curl gnupg apt-transport-https lsb-release ca-certificates
 
       # Add Wazuh repository
       echo 'Adding Wazuh repository...'
@@ -250,23 +251,6 @@ services:
       # Configure agent
       echo 'Configuring agent...'
       sed -i 's|<address>MANAGER_IP</address>|<address>wazuh.manager</address>|g' /var/ossec/etc/ossec.conf
-
-      # Enable log monitoring
-      cat >> /var/ossec/etc/ossec.conf <<EOF
-
-      <!-- Additional monitoring for test logs -->
-      <localfile>
-        <log_format>syslog</log_format>
-        <location>/var/log/auth.log</location>
-      </localfile>
-      <localfile>
-        <log_format>syslog</log_format>
-        <location>/var/log/syslog</location>
-      </localfile>
-      <syscheck>
-        <directories check_all=\"yes\" realtime=\"yes\">/tmp/monitored</directories>
-      </syscheck>
-      EOF
 
       # Start agent
       echo 'Starting Wazuh agent...'
@@ -294,16 +278,16 @@ services:
       # Generate test events continuously
       while true; do
         # Simulate SSH login
-        echo \"[\$(date '+%b %d %H:%M:%S')] systemA-linux sshd[$$RANDOM]: Accepted password for ubuntu from 192.168.1.50 port 22 ssh2\" >> /var/log/auth.log
+        echo \"[\\$(date '+%b %d %H:%M:%S')] systemA-linux sshd[\\$\\$RANDOM]: Accepted password for ubuntu from 192.168.1.50 port 22 ssh2\" >> /var/log/auth.log
 
         # Simulate system event
-        echo \"[\$(date '+%b %d %H:%M:%S')] systemA-linux systemd[1]: Started User Service Example\" >> /var/log/syslog
+        echo \"[\\$(date '+%b %d %H:%M:%S')] systemA-linux systemd[1]: Started User Service Example\" >> /var/log/syslog
 
         # Create/modify files in monitored directory
-        echo \"Test data generated at \$(date)\" > /tmp/monitored/test_file_\$(date +%s).txt
+        echo \"Test data generated at \\$(date)\" > /tmp/monitored/test_file_\\$(date +%s).txt
 
         # Show agent status
-        echo \"[\$(date)] Agent status check:\"
+        echo \"[\\$(date)] Agent status check:\"
         /var/ossec/bin/wazuh-control status || true
 
         # Wait before next event generation
@@ -333,10 +317,9 @@ services:
       bash -c "
       echo 'Installing attack simulation tools...'
       apt-get update -qq &&
-      apt-get install -y -qq curl wget nmap netcat-openbsd hping3 2>/dev/null ||
-      apt-get install -y -qq curl wget nmap netcat-openbsd
+      apt-get install -y -qq curl wget nmap netcat-openbsd 2>/dev/null || apt-get install -y -qq curl wget nmap netcat-openbsd
 
-      # Create log directories
+      # Create log directories FIRST
       mkdir -p /var/log/apache2 /var/log /tmp
 
       echo '========================================='
@@ -346,13 +329,13 @@ services:
 
       while true; do
         # Simulate SSH brute force attack
-        echo \"[\$(date '+%b %d %H:%M:%S')] attack-simulator sshd[$$RANDOM]: Failed password for root from 192.168.1.100 port $$RANDOM ssh2\" >> /var/log/auth.log
-        echo \"[\$(date '+%b %d %H:%M:%S')] attack-simulator sshd[$$RANDOM]: Failed password for admin from 192.168.1.100 port $$RANDOM ssh2\" >> /var/log/auth.log
+        echo \"[\\$(date '+%b %d %H:%M:%S')] attack-simulator sshd[\\$\\$RANDOM]: Failed password for root from 192.168.1.100 port \\$\\$RANDOM ssh2\" >> /var/log/auth.log
+        echo \"[\\$(date '+%b %d %H:%M:%S')] attack-simulator sshd[\\$\\$RANDOM]: Failed password for admin from 192.168.1.100 port \\$\\$RANDOM ssh2\" >> /var/log/auth.log
 
         # Simulate web attacks
-        echo \"[\$(date '+%d/%b/%Y:%H:%M:%S +0000')] 192.168.1.100 - - \\\"GET /admin.php?cmd=cat%20/etc/passwd HTTP/1.1\\\" 403 -\" >> /var/log/apache2/access.log
-        echo \"[\$(date '+%d/%b/%Y:%H:%M:%S +0000')] 192.168.1.100 - - \\\"GET /../../../etc/shadow HTTP/1.1\\\" 403 -\" >> /var/log/apache2/access.log
-        echo \"[\$(date '+%d/%b/%Y:%H:%M:%S +0000')] 192.168.1.100 - - \\\"POST /login.php HTTP/1.1\\\" 200 - \\\"' OR '1'='1\\\"\" >> /var/log/apache2/access.log
+        echo \"[\\$(date '+%d/%b/%Y:%H:%M:%S +0000')] 192.168.1.100 - - \\\\\\\"GET /admin.php?cmd=cat%20/etc/passwd HTTP/1.1\\\\\\\" 403 -\" >> /var/log/apache2/access.log
+        echo \"[\\$(date '+%d/%b/%Y:%H:%M:%S +0000')] 192.168.1.100 - - \\\\\\\"GET /../../../etc/shadow HTTP/1.1\\\\\\\" 403 -\" >> /var/log/apache2/access.log
+        echo \"[\\$(date '+%d/%b/%Y:%H:%M:%S +0000')] 192.168.1.100 - - \\\\\\\"POST /login.php HTTP/1.1\\\\\\\" 200 - \\\\\\\"' OR '1'='1\\\\\\\"\" >> /var/log/apache2/access.log
 
         # Simulate malware/suspicious file activity
         echo '#!/bin/bash' > /tmp/suspicious_script.sh
@@ -360,12 +343,12 @@ services:
         chmod +x /tmp/suspicious_script.sh
 
         # Simulate port scanning (logged activity)
-        echo \"[\$(date)] Port scan detected from 192.168.1.100 to ports 1-1000\" >> /var/log/syslog
+        echo \"[\\$(date)] Port scan detected from 192.168.1.100 to ports 1-1000\" >> /var/log/syslog
 
         # Try to scan the manager (will generate network events)
         timeout 2 nc -zv wazuh.manager 1514 2>/dev/null || true
 
-        echo \"[\$(date)] Attack simulation cycle complete\"
+        echo \"[\\$(date)] Attack simulation cycle complete\"
         sleep 60
       done
       "
