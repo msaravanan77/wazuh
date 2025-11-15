@@ -157,29 +157,72 @@ services:
   # WAZUH AGENT - Linux Example (SystemA)
   # ============================================================
   wazuh.agent.linux:
-    image: wazuh/wazuh-agent:4.7.2
+    image: ubuntu:22.04
     container_name: wazuh.agent.linux
     hostname: systemA-linux
     restart: always
     environment:
       - WAZUH_MANAGER=wazuh.manager
       - WAZUH_MANAGER_PORT=1514
-      - WAZUH_PROTOCOL=tcp
-      - WAZUH_REGISTRATION_SERVER=wazuh.manager
-      - WAZUH_REGISTRATION_PORT=1515
       - WAZUH_REGISTRATION_PASSWORD=please123
-      - WAZUH_KEEP_ALIVE_INTERVAL=60
-      - WAZUH_TIME_RECONNECT=120
       - WAZUH_AGENT_NAME=systemA-linux
-      - WAZUH_AGENT_GROUP=default
+    command: >
+      bash -c "
+      # Update and install dependencies
+      apt-get update &&
+      apt-get install -y curl gnupg apt-transport-https lsb-release &&
+
+      # Add Wazuh repository
+      curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import &&
+      chmod 644 /usr/share/keyrings/wazuh.gpg &&
+      echo \"deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main\" | tee -a /etc/apt/sources.list.d/wazuh.list &&
+
+      # Install Wazuh agent
+      apt-get update &&
+      WAZUH_MANAGER=\"wazuh.manager\" WAZUH_REGISTRATION_PASSWORD=\"please123\" apt-get install -y wazuh-agent &&
+
+      # Configure agent
+      sed -i \"s/<address>MANAGER_IP<\/address>/<address>wazuh.manager<\/address>/g\" /var/ossec/etc/ossec.conf &&
+
+      # Start agent service
+      /var/ossec/bin/wazuh-control start &&
+
+      # Register agent with manager
+      /var/ossec/bin/agent-auth -m wazuh.manager -P please123 -A systemA-linux &&
+
+      # Restart to apply registration
+      /var/ossec/bin/wazuh-control restart &&
+
+      # Generate some test events
+      mkdir -p /var/log/test /tmp/monitored &&
+
+      # Keep container running and generate events
+      while true; do
+        # Simulate user logins
+        echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] systemA-linux sshd[12345]: Accepted password for ubuntu from 192.168.1.50 port 22 ssh2\" >> /var/log/auth.log
+
+        # Simulate file changes
+        echo \"Test data \$(date)\" > /tmp/monitored/test_file_\$(date +%s).txt
+
+        # Simulate system activity
+        echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] systemA-linux systemd[1]: Started Test Service\" >> /var/log/syslog
+
+        # Check agent status
+        /var/ossec/bin/wazuh-control status
+
+        sleep 120
+      done
+      "
     volumes:
-      # Monitor Docker host logs (example)
-      - /var/log:/host/var/log:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Persist agent configuration
+      - agent_etc:/var/ossec/etc
+      - agent_logs:/var/ossec/logs
+      - agent_queue:/var/ossec/queue
     depends_on:
       - wazuh.manager
     networks:
       - wazuh
+    privileged: true  # Required for agent to monitor system
 
   # ============================================================
   # SIMULATED ATTACK GENERATOR (For Testing)
@@ -244,6 +287,12 @@ volumes:
   wazuh-dashboard-custom:
     driver: local
   attack-logs:
+    driver: local
+  agent_etc:
+    driver: local
+  agent_logs:
+    driver: local
+  agent_queue:
     driver: local
 
 # ============================================================
