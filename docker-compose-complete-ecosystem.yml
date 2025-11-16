@@ -42,11 +42,11 @@ services:
       - wazuh-certificates:/certificates
     command: >
       sh -c "
-      # Check if properly named certificates already exist
-      if [ -f /certificates/wazuh.indexer.pem ]; then
-        echo 'Certificates already exist, skipping generation'
-        exit 0
-      fi
+      echo 'Starting certificate generation process...'
+
+      # ALWAYS delete old/broken certificates first
+      echo 'Removing any existing certificates...'
+      rm -rf /certificates/*
 
       echo 'Installing required tools...'
       apk add --no-cache curl openssl bash
@@ -69,7 +69,7 @@ services:
             ip: wazuh.dashboard
       CONFIGEOF
 
-      echo 'Generating certificates...'
+      echo 'Generating NEW certificates...'
       bash /tmp/wazuh-certs-tool.sh -A /tmp/config.yml -ca -v
 
       echo 'Copying certificates to shared volume...'
@@ -80,9 +80,11 @@ services:
 
       echo '========================================='
       echo 'Certificate generation complete!'
+      echo 'Generated certificates:'
       echo '========================================='
       ls -lah /certificates/
       "
+
     networks:
       - wazuh
 
