@@ -57,7 +57,7 @@ services:
         curl -so /tmp/wazuh-certs-tool.sh https://packages.wazuh.com/4.7/wazuh-certs-tool.sh
         chmod +x /tmp/wazuh-certs-tool.sh
 
-        # Create config for certificate generation
+        # Create config for certificate generation (must be in same directory as script)
         cat > /tmp/config.yml <<'CONFIGEOF'
         nodes:
           indexer:
@@ -72,10 +72,11 @@ services:
         CONFIGEOF
 
         echo 'Generating NEW certificates...'
-        bash /tmp/wazuh-certs-tool.sh -A /tmp/config.yml -ca -v
+        cd /tmp
+        bash wazuh-certs-tool.sh -A
 
         echo 'Copying certificates to shared volume...'
-        cp -v /tmp/wazuh-certificates/*.pem /certificates/
+        cp -v wazuh-certificates/*.pem /certificates/
 
         # Set proper permissions
         chmod 644 /certificates/*.pem
