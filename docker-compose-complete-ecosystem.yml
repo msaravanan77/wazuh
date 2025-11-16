@@ -58,18 +58,18 @@ services:
         chmod +x /tmp/wazuh-certs-tool.sh
 
         # Create config for certificate generation (must be in same directory as script)
-        cat > /tmp/config.yml <<'CONFIGEOF'
-nodes:
-  indexer:
-  - name: wazuh.indexer
-    ip: wazuh.indexer
-  server:
-  - name: wazuh.manager
-    ip: wazuh.manager
-  dashboard:
-  - name: wazuh.dashboard
-    ip: wazuh.dashboard
-CONFIGEOF
+        cat > /tmp/config.yml <<-'CONFIGEOF'
+	nodes:
+	  indexer:
+	    - name: wazuh.indexer
+	      ip: wazuh.indexer
+	  server:
+	    - name: wazuh.manager
+	      ip: wazuh.manager
+	  dashboard:
+	    - name: wazuh.dashboard
+	      ip: wazuh.dashboard
+	CONFIGEOF
 
         echo 'Generating NEW certificates...'
         cd /tmp
