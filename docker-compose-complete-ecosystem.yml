@@ -40,51 +40,51 @@ services:
     hostname: wazuh-certs-generator
     volumes:
       - wazuh-certificates:/certificates
-    command: >
-      sh -c "
-      echo 'Starting certificate generation process...'
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo 'Starting certificate generation process...'
 
-      # ALWAYS delete old/broken certificates first
-      echo 'Removing any existing certificates...'
-      rm -rf /certificates/*
+        # ALWAYS delete old/broken certificates first
+        echo 'Removing any existing certificates...'
+        rm -rf /certificates/*
 
-      echo 'Installing required tools...'
-      apk add --no-cache curl openssl bash
+        echo 'Installing required tools...'
+        apk add --no-cache curl openssl bash
 
-      echo 'Downloading Wazuh certificate generation tool...'
-      curl -so /tmp/wazuh-certs-tool.sh https://packages.wazuh.com/4.7/wazuh-certs-tool.sh
-      chmod +x /tmp/wazuh-certs-tool.sh
+        echo 'Downloading Wazuh certificate generation tool...'
+        curl -so /tmp/wazuh-certs-tool.sh https://packages.wazuh.com/4.7/wazuh-certs-tool.sh
+        chmod +x /tmp/wazuh-certs-tool.sh
 
-      # Create config for certificate generation
-      cat > /tmp/config.yml <<'CONFIGEOF'
-      nodes:
-        indexer:
-          - name: wazuh.indexer
-            ip: wazuh.indexer
-        server:
-          - name: wazuh.manager
-            ip: wazuh.manager
-        dashboard:
-          - name: wazuh.dashboard
-            ip: wazuh.dashboard
-      CONFIGEOF
+        # Create config for certificate generation
+        cat > /tmp/config.yml <<'CONFIGEOF'
+        nodes:
+          indexer:
+            - name: wazuh.indexer
+              ip: wazuh.indexer
+          server:
+            - name: wazuh.manager
+              ip: wazuh.manager
+          dashboard:
+            - name: wazuh.dashboard
+              ip: wazuh.dashboard
+        CONFIGEOF
 
-      echo 'Generating NEW certificates...'
-      bash /tmp/wazuh-certs-tool.sh -A /tmp/config.yml -ca -v
+        echo 'Generating NEW certificates...'
+        bash /tmp/wazuh-certs-tool.sh -A /tmp/config.yml -ca -v
 
-      echo 'Copying certificates to shared volume...'
-      cp -v /tmp/wazuh-certificates/*.pem /certificates/
+        echo 'Copying certificates to shared volume...'
+        cp -v /tmp/wazuh-certificates/*.pem /certificates/
 
-      # Set proper permissions
-      chmod 644 /certificates/*.pem
+        # Set proper permissions
+        chmod 644 /certificates/*.pem
 
-      echo '========================================='
-      echo 'Certificate generation complete!'
-      echo 'Generated certificates:'
-      echo '========================================='
-      ls -lah /certificates/
-      "
-
+        echo '========================================='
+        echo 'Certificate generation complete!'
+        echo 'Generated certificates:'
+        echo '========================================='
+        ls -lah /certificates/
     networks:
       - wazuh
 
